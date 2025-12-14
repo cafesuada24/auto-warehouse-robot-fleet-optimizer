@@ -1,6 +1,9 @@
 version: v2
 
-name: buf.build/cafesuada/awrfo-contracts
+
+modules:
+  - path: proto
+    name: buf.build/cafesuada/awrfo
 
 lint:
   use:

@@ -1,13 +1,13 @@
 version: v2
 
-# clean: true
+clean: true
 
 inputs:
-  - directory: .
+  - directory: proto
 
 plugins:
-  - protoc_builtin: python
-    out: ../generated
-  - protoc_builtin: pyi
-    out: ../generated
+  - remote: buf.build/protocolbuffers/python
+    out: ../generated/awrfo-python/src
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../generated/awrfo-python/src
 
