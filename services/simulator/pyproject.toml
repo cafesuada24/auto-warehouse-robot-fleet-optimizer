@@ -4,6 +4,11 @@ version = "0.0.1"
 description = "Simulation service for AWRFO"
 readme = "README.md"
 requires-python = ">=3.12"
+dependencies = [
+    "awrfo-contracts @ file://../../shared/generated",
+
+    "redis[hiredis]>=7.1.0",
+]
 
 [tool.ruff]
 line-length = 88
