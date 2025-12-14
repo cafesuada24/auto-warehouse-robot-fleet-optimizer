@@ -12,10 +12,7 @@ line-length = 88
 target-version = "py312"
 
 [tool.uv.workspace]
-members = [
-    "services/*",
-    "shared/generated",
-]
+members = ["services/*", "shared/generated"]
 
 [tool.uv.sources]
 awrfo-contracts = { workspace = true }
