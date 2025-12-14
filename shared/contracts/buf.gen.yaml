@@ -1,0 +1,13 @@
+version: v2
+
+# clean: true
+
+inputs:
+  - directory: .
+
+plugins:
+  - protoc_builtin: python
+    out: ../generated
+  - protoc_builtin: pyi
+    out: ../generated
+
