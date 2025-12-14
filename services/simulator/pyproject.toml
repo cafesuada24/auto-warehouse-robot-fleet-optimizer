@@ -2,17 +2,18 @@
 name = "awrfo-simulator-service"
 version = "0.0.1"
 description = "Simulation service for AWRFO"
+authors = [{ name = 'Cafesuada', email = 'connghiencafe@protonmail.com' }]
+maintainers = [{ name = 'Cafesuada', email = 'connghiencafe@protonmail.com' }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "awrfo-contracts",
-
+    "awrfo-generated",
+    "awrfo-common", 
+    "fastapi[standard]>=0.124.4",
     "redis[hiredis]>=7.1.0",
 ]
 
 [tool.uv.sources]
-awrfo-contracts = { workspace = true }
+awrfo-generated = { workspace = true }
+awrfo-common = { workspace = true }
 
-[tool.ruff]
-line-length = 88
-target-version = "py312"
