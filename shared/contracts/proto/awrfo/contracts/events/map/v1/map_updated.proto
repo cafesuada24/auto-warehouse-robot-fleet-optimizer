@@ -1,0 +1,28 @@
+/**
+ * Copyright (C) 2025 Cafesuada - All Rights Reserved
+ *
+ * This source code is protected under international copyright law.  All rights
+ * reserved and protected by the copyright holders.
+ * This file is confidential and only available to authorized individuals with the
+ * permission of the copyright holders.  If you encounter this file and do not have
+ * permission, please contact the copyright holders and delete this file.
+ */
+
+
+syntax = "proto3";
+
+package awrfo.contracts.events.map.v1;
+
+import "awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto";
+
+message MapUpdatedPayload {
+  uint32 width = 1;
+  uint32 height = 2;
+  repeated uint32 data = 3;
+}
+
+
+message MapUpdatedEvent {
+  awrfo.contracts.envelopes.event_envelope.v1.EventEnvelope envelope = 1;
+  MapUpdatedPayload payload = 2;
+}

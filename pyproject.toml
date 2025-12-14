@@ -6,17 +6,16 @@ authors = [{ name = 'Cafesuada', email = 'connghiencafe@protonmail.com' }]
 maintainers = [{ name = 'Cafesuada', email = 'connghiencafe@protonmail.com' }]
 readme = "README.md"
 requires-python = ">=3.12"
+dependencies = []
+
+
+[tool.uv.workspace]
+members = ["services/*", "shared/generated/awrfo-python"]
 
 [tool.ruff]
 line-length = 88
 target-version = "py312"
 
-[tool.uv.workspace]
-members = ["services/*", "shared/generated"]
-
-[tool.uv.sources]
-awrfo-contracts = { workspace = true }
-# py-common = { workspace = true }
 
 [tool.ruff.lint.per-file-ignores]
 # "**/{tests,docs,tools}/*" = ["E402"]
