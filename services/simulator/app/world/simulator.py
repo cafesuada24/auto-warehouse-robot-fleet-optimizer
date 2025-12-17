@@ -1,14 +1,18 @@
 import asyncio
 import queue
+from enum import Enum
 from queue import Queue
 from time import monotonic
-from typing import Literal
 
 from app.world.world import World
 
 
 class Simulator:
-    type Command = Literal['WAIT', 'MOVE_TO', 'PICKUP', 'DROPOFF']
+    class Command(Enum):
+        WAIT = 1
+        MOVE_TO = 2
+        PICKUP = 3
+        DROPOFF = 4
 
     def __init__(self, world: World) -> None:
         self.__world = world
