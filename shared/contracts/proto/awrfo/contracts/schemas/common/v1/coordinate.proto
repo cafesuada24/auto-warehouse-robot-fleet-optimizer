@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package awrfo.contracts.schemas.common.v1;
+
+import "buf/validate/validate.proto";
+
+message Coordinate {
+  float x = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float.gte = 0.0
+  ];
+
+  float y = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float.gte = 0.0
+  ];
+}
+

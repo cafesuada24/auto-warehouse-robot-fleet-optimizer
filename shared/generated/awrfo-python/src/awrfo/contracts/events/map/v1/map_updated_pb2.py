@@ -25,13 +25,14 @@ _sym_db = _symbol_database.Default()
 from awrfo.contracts.envelopes.event_envelope.v1 import event_envelope_pb2 as awrfo_dot_contracts_dot_envelopes_dot_event__envelope_dot_v1_dot_event__envelope__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n/awrfo/contracts/events/map/v1/map_updated.proto\x12\x1d\x61wrfo.contracts.events.map.v1\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\"U\n\x11MapUpdatedPayload\x12\x14\n\x05width\x18\x01 \x01(\rR\x05width\x12\x16\n\x06height\x18\x02 \x01(\rR\x06height\x12\x12\n\x04\x64\x61ta\x18\x03 \x03(\rR\x04\x64\x61ta\"\xb5\x01\n\x0fMapUpdatedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12J\n\x07payload\x18\x02 \x01(\x0b\x32\x30.awrfo.contracts.events.map.v1.MapUpdatedPayloadR\x07payloadb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n/awrfo/contracts/events/map/v1/map_updated.proto\x12\x1d\x61wrfo.contracts.events.map.v1\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\"U\n\x11MapUpdatedPayload\x12\x14\n\x05width\x18\x01 \x01(\rR\x05width\x12\x16\n\x06height\x18\x02 \x01(\rR\x06height\x12\x12\n\x04\x64\x61ta\x18\x03 \x03(\rR\x04\x64\x61ta\"\xb5\x01\n\x0fMapUpdatedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12J\n\x07payload\x18\x02 \x01(\x0b\x32\x30.awrfo.contracts.events.map.v1.MapUpdatedPayloadR\x07payloadB\xcd\x01\n!com.awrfo.contracts.events.map.v1B\x0fMapUpdatedProtoP\x01\xa2\x02\x04\x41\x43\x45M\xaa\x02\x1d\x41wrfo.Contracts.Events.Map.V1\xca\x02\x1d\x41wrfo\\Contracts\\Events\\Map\\V1\xe2\x02)Awrfo\\Contracts\\Events\\Map\\V1\\GPBMetadata\xea\x02!Awrfo::Contracts::Events::Map::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'awrfo.contracts.events.map.v1.map_updated_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
+  _globals['DESCRIPTOR']._loaded_options = None
+  _globals['DESCRIPTOR']._serialized_options = b'\n!com.awrfo.contracts.events.map.v1B\017MapUpdatedProtoP\001\242\002\004ACEM\252\002\035Awrfo.Contracts.Events.Map.V1\312\002\035Awrfo\\Contracts\\Events\\Map\\V1\342\002)Awrfo\\Contracts\\Events\\Map\\V1\\GPBMetadata\352\002!Awrfo::Contracts::Events::Map::V1'
   _globals['_MAPUPDATEDPAYLOAD']._serialized_start=148
   _globals['_MAPUPDATEDPAYLOAD']._serialized_end=233
   _globals['_MAPUPDATEDEVENT']._serialized_start=236

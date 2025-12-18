@@ -5,6 +5,9 @@ modules:
   - path: proto
     name: buf.build/cafesuada/awrfo
 
+deps:
+  - buf.build/bufbuild/protovalidate
+
 lint:
   use:
     - STANDARD

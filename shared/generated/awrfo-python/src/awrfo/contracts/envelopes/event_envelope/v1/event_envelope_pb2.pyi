@@ -1,5 +1,6 @@
 import datetime
 
+from buf.validate import validate_pb2 as _validate_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
@@ -20,6 +21,7 @@ class EventEnvelope(_message.Message):
         def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
     EVENT_ID_FIELD_NUMBER: _ClassVar[int]
     EVENT_TYPE_FIELD_NUMBER: _ClassVar[int]
+    TIME_S_FIELD_NUMBER: _ClassVar[int]
     OCCURRED_AT_FIELD_NUMBER: _ClassVar[int]
     PRODUCER_FIELD_NUMBER: _ClassVar[int]
     TENANT_ID_FIELD_NUMBER: _ClassVar[int]
@@ -33,6 +35,7 @@ class EventEnvelope(_message.Message):
     ENVELOPE_VERSION_FIELD_NUMBER: _ClassVar[int]
     event_id: str
     event_type: str
+    time_s: int
     occurred_at: _timestamp_pb2.Timestamp
     producer: str
     tenant_id: str
@@ -44,4 +47,4 @@ class EventEnvelope(_message.Message):
     attributes: _containers.ScalarMap[str, str]
     content_type: str
     envelope_version: int
-    def __init__(self, event_id: _Optional[str] = ..., event_type: _Optional[str] = ..., occurred_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., producer: _Optional[str] = ..., tenant_id: _Optional[str] = ..., partition_key: _Optional[str] = ..., idempotency_key: _Optional[str] = ..., correlation_id: _Optional[str] = ..., causation_id: _Optional[str] = ..., traceparent: _Optional[str] = ..., attributes: _Optional[_Mapping[str, str]] = ..., content_type: _Optional[str] = ..., envelope_version: _Optional[int] = ...) -> None: ...
+    def __init__(self, event_id: _Optional[str] = ..., event_type: _Optional[str] = ..., time_s: _Optional[int] = ..., occurred_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., producer: _Optional[str] = ..., tenant_id: _Optional[str] = ..., partition_key: _Optional[str] = ..., idempotency_key: _Optional[str] = ..., correlation_id: _Optional[str] = ..., causation_id: _Optional[str] = ..., traceparent: _Optional[str] = ..., attributes: _Optional[_Mapping[str, str]] = ..., content_type: _Optional[str] = ..., envelope_version: _Optional[int] = ...) -> None: ...

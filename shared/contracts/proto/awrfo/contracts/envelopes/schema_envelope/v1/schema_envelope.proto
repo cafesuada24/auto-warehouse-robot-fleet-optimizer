@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package awrfo.contracts.envelopes.schema_envelope.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "com.awrfo.contracts.envelopes.schema_envelope.v1";
+
+message SchemaEnvelope {
+  float time_s = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float.gte = 0.0
+
+  ];
+
+  // When the event happened (UTC).
+  google.protobuf.Timestamp occurred_at = 2;
+
+  string producer = 4;
+
+  uint32 envelope_version = 5;
+}
