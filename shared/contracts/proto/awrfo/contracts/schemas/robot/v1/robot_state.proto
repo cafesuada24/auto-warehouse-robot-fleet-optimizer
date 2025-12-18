@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package awrfo.contracts.schemas.robot.v1;
+
+import "buf/validate/validate.proto";
+import "awrfo/contracts/schemas/common/v1/coordinate.proto";
+import "awrfo/contracts/envelopes/schema_envelope/v1/schema_envelope.proto";
+
+enum RobotStateType {
+  UNKNOWN = 0;
+  IDLE = 1;
+  MOVING = 2;
+  WAITING = 3;
+  PICKING = 4;
+  DROPPING = 5;
+}
+
+
+message RobotStatePayload {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ]; 
+
+  awrfo.contracts.schemas.common.v1.Coordinate position = 2 [
+    (buf.validate.field).required = true
+  ];
+
+  float battery = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = { gte: 0.0, lte: 1.0 }
+  ];
+
+  RobotStateType state = 4 [
+    (buf.validate.field).required = true
+  ];
+}
+
+message RobotState {
+  awrfo.contracts.envelopes.schema_envelope.v1.SchemaEnvelope envelope = 1;
+  RobotStatePayload payload = 2;
+}

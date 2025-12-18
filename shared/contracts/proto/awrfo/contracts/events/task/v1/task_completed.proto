@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package awrfo.contracts.events.task.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto";
+
+message TaskCompletedPayload {
+  string task_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  string robot_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  google.protobuf.Duration duration_s = 3 [
+    (buf.validate.field).required = true
+  ];
+
+  float battery_used = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).float = { gte: 0.0, lte: 1.0 }
+  ];
+}
+
+message TaskCompletedEvent {
+  awrfo.contracts.envelopes.event_envelope.v1.EventEnvelope envelope = 1;
+  TaskCompletedPayload payload = 2;
+}

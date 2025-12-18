@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package awrfo.contracts.events.task.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto";
+import "awrfo/contracts/schemas/common/v1/coordinate.proto";
+
+message TaskCreatedPayload {
+  string task_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  google.protobuf.Duration duration_s = 2 [
+    (buf.validate.field).required = true
+  ];
+
+  awrfo.contracts.schemas.common.v1.Coordinate pickup = 3 [
+    (buf.validate.field).required = true
+  ];
+  
+  awrfo.contracts.schemas.common.v1.Coordinate dropoff = 4 [
+    (buf.validate.field).required = true
+  ];
+
+  uint64 deadline_s = 5 [
+    (buf.validate.field).required = true
+  ];
+}
+
+message TaskCreatedEvent {
+  awrfo.contracts.envelopes.event_envelope.v1.EventEnvelope envelope = 1;
+  TaskCreatedPayload payload = 2;
+}
