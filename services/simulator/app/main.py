@@ -8,60 +8,51 @@
 
 import asyncio
 import threading
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, Protocol, TypedDict
+from typing import Any, TypedDict
+from uuid import uuid4
 
 from fastapi import FastAPI
 
-from .bus.redis_bus import Command, RedisBusAdapter
+from app.infra.bus.event_bus import EventBus
+from app.infra.bus.redis_bus import RedisBusAdapter, RedisBusMessage
+from app.world.models.map import Map
+from app.world.models.robot import Robot
+
 from .world.models.world import World
 from .world.simulator import Simulator
 
 
-class EventBus(Protocol):
-    def start(self) -> None: ...
-
-    def subscribe(
-        self,
-        topic: str,
-        callback: Callable[[Command], Any] | None = None,
-    ) -> None: ...
-
-    async def publish_event(self, topic: str, message: str): ...
-
-    def cleanup(self) -> None: ...
-
-
 class Context(TypedDict, total=False):
-    event_bus: EventBus | None
-    world: World
-    simulator: Simulator
+    event_bus: EventBus[RedisBusMessage] | None
+    # world: World
+    simulator: Simulator[RedisBusMessage]
 
 
 context: Context = {}
 
 
-def _attach_command_handlers(
-    simulator: Simulator,
-    event_bus: EventBus,
-    *,
-    prefix: str = 'CMD',
-) -> None:
-    for topic_str, cmd in zip(
-        ['WAIT', 'MOVE_TO', 'PICKUP', 'DROPOFF'],
-        [
-            Simulator.Command.WAIT,
-            Simulator.Command.MOVE_TO,
-            Simulator.Command.PICKUP,
-            Simulator.Command.DROPOFF,
-        ],
-        strict=True,
-    ):
-        event_bus.subscribe(
-            f'{prefix}:{topic_str}',
-            lambda msg, cmd=cmd: simulator.register_command(cmd, msg['data'].decode()),
-        )
+# def _attach_command_handlers(
+#     simulator: Simulator,
+#     event_bus: EventBus,
+#     *,
+#     prefix: str = 'CMD',
+# ) -> None:
+#     for topic_str, cmd in zip(
+#         ['WAIT', 'MOVE_TO', 'PICKUP', 'DROPOFF'],
+#         [
+#             Simulator.Command.WAIT,
+#             Simulator.Command.MOVE_TO,
+#             Simulator.Command.PICKUP,
+#             Simulator.Command.DROPOFF,
+#         ],
+#         strict=True,
+#     ):
+#         event_bus.subscribe(
+#             f'{prefix}:{topic_str}',
+#             lambda msg, cmd=cmd: simulator.register_command(cmd, msg['data'].decode()),
+#         )
 
 
 @asynccontextmanager
@@ -69,10 +60,20 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     """Declare app lifespan."""
     global context
 
-    world = World()
-    context['world'] = world
+    robots = {
+        (rid:=uuid4()): Robot((0.0, i), id=rid)
+        for i in range(2)
+    }
+    world = World(
+        map=Map(100, 100, set()),
+        robots=robots,
+    )
+    # context['world'] = world
 
-    simulator = Simulator(world=world)
+    event_bus = RedisBusAdapter()
+    context['event_bus'] = event_bus
+
+    simulator = Simulator(world=world, bus=event_bus)
     context['simulator'] = simulator
 
     loop = asyncio.new_event_loop()
@@ -90,12 +91,10 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
         loop=loop,
     )
 
-    event_bus = RedisBusAdapter()
-    context['event_bus'] = event_bus
-    _attach_command_handlers(
-        simulator=simulator,
-        event_bus=event_bus,
-    )
+    # _attach_command_handlers(
+    #     simulator=simulator,
+    #     event_bus=event_bus,
+    # )
     event_bus.start()
 
     yield
