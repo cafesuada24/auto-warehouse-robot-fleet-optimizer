@@ -2,15 +2,12 @@
 name = "awrfo"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "protobuf"
-]
+dependencies = ["protobuf"]
 
 [build-system]
 requires = ["uv_build>=0.9.17,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "awrfo"
+module-name = ["awrfo", "buf"]
 module-root = "src"
-
