@@ -22,11 +22,31 @@ class RobotGoal:
     pos: Position | None = None
     wait_remaining: NonNegativeFloat | None = None
 
+@dataclasses.dataclass(frozen=True)
+class RobotStateSnapshot:
+    robot_id: IDType
+    pos: Position
+    state: RobotState
+    battery: float
+    assigned_task_id: IDType | None
+
+
 @dataclass
 class Robot:
     pos: Position
-    state: RobotState
+    state: RobotState = RobotState.IDLE
     battery: float = Field(ge=0, le=1.0, default=1.0)
     id: IDType = dataclasses.field(default_factory=uuid4)
+    assigned_task_id: IDType | None = None
 
     intent: RobotGoal | None = None
+
+    def snapshot(self) -> RobotStateSnapshot:
+        """Produce an immutable snapshot for publishing."""
+        return RobotStateSnapshot(
+            robot_id=self.id,
+            pos=self.pos,
+            battery=self.battery,
+            state=self.state,
+            assigned_task_id=self.assigned_task_id,
+        )
