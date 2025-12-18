@@ -1,3 +1,3 @@
-from pydantic import NonNegativeInt
+from pydantic import NonNegativeFloat
 
-type Position = tuple[NonNegativeInt, NonNegativeInt]
+type Position = tuple[NonNegativeFloat, NonNegativeFloat]
