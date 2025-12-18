@@ -5,7 +5,8 @@ from typing import Any, TypedDict
 import redis
 from redis.client import PubSubWorkerThread
 
-class Command(TypedDict):
+
+class RedisBusMessage(TypedDict):
     channel: bytes
     data: bytes
     pattern: str | None
@@ -26,15 +27,15 @@ class RedisBusAdapter:
         self.__thread: PubSubWorkerThread | None = None
 
     def subscribe(
-        self, topic: str, callback: Callable[[Command], Any] | None = None
+        self, topic: str, callback: Callable[[RedisBusMessage], Any] | None = None
     ) -> None:
         if callback is not None:
             self.__p.subscribe(**{topic: callback})  # pyright: ignore
         else:
             self.__p.subscribe(topic)
 
-    async def publish_event(self, topic: str, message: str):
-        await self.__redis.publish(channel=topic, message=message)
+    def publish_event(self, topic: str, message: str | bytes):
+        self.__redis.publish(channel=topic, message=message)
 
     def start(self) -> None:
         self.__thread = self.__p.run_in_thread(
