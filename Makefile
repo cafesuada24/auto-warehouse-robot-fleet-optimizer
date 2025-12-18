@@ -13,9 +13,9 @@ help:
 
 
 gen-contracts:
-	cd shared/contracts && buf generate
+	cd shared/contracts && buf generate --include-imports
 	# protoc --protopath=./contracts --python-out=./generated
-	find shared/generated/awrfo-python/src/awrfo -type d -exec touch {}/__init__.py \;
+	find shared/generated/awrfo-python/src/ -type d -exec touch {}/__init__.py \;
 	
 lint-contracts:
 	cd shared/contracts && buf lint
