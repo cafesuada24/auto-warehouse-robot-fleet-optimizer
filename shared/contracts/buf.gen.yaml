@@ -5,9 +5,11 @@ clean: true
 inputs:
   - directory: proto
 
-plugins:
-  - remote: buf.build/protocolbuffers/python
-    out: ../generated/awrfo-python/src
-  - remote: buf.build/protocolbuffers/pyi
-    out: ../generated/awrfo-python/src
+managed:
+  enabled: True
 
+plugins:
+  - remote: buf.build/protocolbuffers/python:v33.2
+    out: ../generated/awrfo-python/src
+  - remote: buf.build/protocolbuffers/pyi:v33.2
+    out: ../generated/awrfo-python/src

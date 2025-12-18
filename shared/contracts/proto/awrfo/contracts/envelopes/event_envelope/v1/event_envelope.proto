@@ -13,55 +13,66 @@ syntax = "proto3";
 
 package awrfo.contracts.envelopes.event_envelope.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
 option java_multiple_files = true;
-option java_package = "com.roboops.envelopes.event_envelope.v1";
+option java_package = "com.awrfo.contracts.envelopes.event_envelope.v1";
 
 // Generic metadata wrapper attached to every event message.
 // The event payload is defined in event-specific protos.
 message EventEnvelope {
   // Unique ID for this event instance (UUID recommended).
-  string event_id = 1;
+  string event_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ]; 
 
   // Stable name + version, e.g. "waypoint.saved.v1".
-  string event_type = 2;
+  string event_type = 2 [
+    (buf.validate.field).required = true
+  ]; 
+
+  uint64 time_s = 3 [
+    (buf.validate.field).required = true
+  ];
 
   // When the event happened (UTC).
-  google.protobuf.Timestamp occurred_at = 3;
+  google.protobuf.Timestamp occurred_at = 4;
+
 
   // Service that produced it, e.g. "map-service".
-  string producer = 4;
+  string producer = 5;
 
   // Optional: tenant/org context (useful for multi-tenancy).
-  string tenant_id = 5;
+  optional string tenant_id = 6;
 
   // Optional: logical partition key (map_id, robot_id, mission_id).
   // For Kafka later, use this as the Kafka message key.
-  string partition_key = 6;
+  optional string partition_key = 7;
 
   // Idempotency key for consumers (helps dedupe at-least-once delivery).
   // Often equals event_id, but can be different if you emit retries.
-  string idempotency_key = 7;
+  string idempotency_key = 8;
 
   // Correlation & causation for debugging workflows/sagas.
   // correlation_id: ties a chain of operations together (request/mission).
   // causation_id: the direct trigger (command_id, prior event_id).
-  string correlation_id = 8;
-  string causation_id = 9;
+  string correlation_id = 9;
+  string causation_id = 10;
 
   // Distributed tracing propagation.
   // W3C trace context header "traceparent" (recommended).
-  string traceparent = 10;
+  string traceparent = 11;
 
   // Optional span link(s) or vendor-specific extras.
   // Keep this small; use it sparingly.
-  map<string, string> attributes = 11;
+  map<string, string> attributes = 12;
 
   // Schema/content metadata (useful for mixed encodings or future migration).
   // Example: "application/x-protobuf", "application/json".
-  string content_type = 12;
+  string content_type = 13;
 
   // Increment if you ever change envelope semantics (rare).
-  uint32 envelope_version = 13;
+  uint32 envelope_version = 14;
 }

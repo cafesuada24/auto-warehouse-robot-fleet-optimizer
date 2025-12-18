@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package awrfo.contracts.commands.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "awrfo/contracts/schemas/common/v1/coordinate.proto";
+
+enum CommandType {
+  WAIT = 0;
+  MOVE_TO = 1;
+  PICKUP = 2;
+  DROPOFF = 3;
+}
+
+message CommandParams {
+  optional awrfo.contracts.schemas.common.v1.Coordinate target = 1;
+  optional google.protobuf.Duration duration_s = 2 [
+    (buf.validate.field).required = true
+  ];
+}
+
+message ActionCommand {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  string robot_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  CommandType command = 3 [
+    (buf.validate.field).required = true
+  ];
+
+  CommandParams params = 4 [
+    (buf.validate.field).required = true
+  ];
+}
