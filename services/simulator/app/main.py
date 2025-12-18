@@ -14,9 +14,9 @@ from typing import Any, Protocol, TypedDict
 
 from fastapi import FastAPI
 
-from app.bus.redis_bus import Command, RedisBusAdapter
-from app.world.simulator import Simulator
-from app.world.world import World
+from .bus.redis_bus import Command, RedisBusAdapter
+from .world.models.world import World
+from .world.simulator import Simulator
 
 
 class EventBus(Protocol):

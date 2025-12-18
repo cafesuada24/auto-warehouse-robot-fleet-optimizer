@@ -4,7 +4,7 @@ from enum import Enum
 from queue import Queue
 from time import monotonic
 
-from app.world.world import World
+from .models.world import World
 
 
 class Simulator:
