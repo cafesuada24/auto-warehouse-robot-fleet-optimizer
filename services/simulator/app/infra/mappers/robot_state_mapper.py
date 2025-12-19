@@ -1,17 +1,17 @@
 import time
 from types import MappingProxyType
 
-from app.world.models import robot
-from app.world.models.robot import RobotStateSnapshot
 from awrfo.contracts.envelopes.schema_envelope.v1.schema_envelope_pb2 import (
     SchemaEnvelope,
 )
 from awrfo.contracts.schemas.common.v1.coordinate_pb2 import Coordinate
 from awrfo.contracts.schemas.robot.v1.robot_state_pb2 import (
     RobotState,
-    RobotStatePayload,
     RobotStateType,
 )
+
+from app.world.models import robot
+from app.world.models.robot import RobotStateSnapshot
 
 _DOMAIN_TO_PROTO_MODE = MappingProxyType(
     {
@@ -26,15 +26,17 @@ _DOMAIN_TO_PROTO_MODE = MappingProxyType(
 
 def snapshot_to_proto(
     snapshot: RobotStateSnapshot,
-    time_s: float | None = None,
+    ts_s: float | None = None,
 ) -> RobotState:
     time_now_s = time.time()
     envelope = SchemaEnvelope(
-        time_s=time_s or time_now_s,
+        ts_ms=int((ts_s or time_now_s) * 1000),
         producer='simulator-service',
         envelope_version=1,
     )
-    payload = RobotStatePayload(
+
+    return RobotState(
+        envelope=envelope,
         id=str(snapshot.robot_id),
         position=Coordinate(x=snapshot.pos[0], y=snapshot.pos[1]),
         battery=snapshot.battery,
@@ -42,9 +44,4 @@ def snapshot_to_proto(
             snapshot.state,
             RobotStateType.UNKNOWN,
         ),
-    )
-
-    return RobotState(
-        envelope=envelope,
-        payload=payload,
     )
