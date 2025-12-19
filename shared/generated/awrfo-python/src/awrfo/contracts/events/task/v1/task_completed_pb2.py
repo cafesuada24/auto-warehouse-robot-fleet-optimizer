@@ -27,7 +27,7 @@ from google.protobuf import duration_pb2 as google_dot_protobuf_dot_duration__pb
 from awrfo.contracts.envelopes.event_envelope.v1 import event_envelope_pb2 as awrfo_dot_contracts_dot_envelopes_dot_event__envelope_dot_v1_dot_event__envelope__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n3awrfo/contracts/events/task/v1/task_completed.proto\x12\x1e\x61wrfo.contracts.events.task.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\"\xdd\x01\n\x14TaskCompletedPayload\x12$\n\x07task_id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x06taskId\x12&\n\x08robot_id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x07robotId\x12@\n\nduration_s\x18\x03 \x01(\x0b\x32\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\tdurationS\x12\x35\n\x0c\x62\x61ttery_used\x18\x04 \x01(\x02\x42\x12\xbaH\x0f\n\n\x1d\x00\x00\x80?-\x00\x00\x00\x00\xc8\x01\x01R\x0b\x62\x61tteryUsed\"\xbc\x01\n\x12TaskCompletedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12N\n\x07payload\x18\x02 \x01(\x0b\x32\x34.awrfo.contracts.events.task.v1.TaskCompletedPayloadR\x07payloadB\xd5\x01\n\"com.awrfo.contracts.events.task.v1B\x12TaskCompletedProtoP\x01\xa2\x02\x04\x41\x43\x45T\xaa\x02\x1e\x41wrfo.Contracts.Events.Task.V1\xca\x02\x1e\x41wrfo\\Contracts\\Events\\Task\\V1\xe2\x02*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\xea\x02\"Awrfo::Contracts::Events::Task::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n3awrfo/contracts/events/task/v1/task_completed.proto\x12\x1e\x61wrfo.contracts.events.task.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\"\xb3\x02\n\x12TaskCompletedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12$\n\x07task_id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x06taskId\x12&\n\x08robot_id\x18\x03 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x07robotId\x12@\n\nduration_s\x18\x04 \x01(\x0b\x32\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\tdurationS\x12\x35\n\x0c\x62\x61ttery_used\x18\x05 \x01(\x02\x42\x12\xbaH\x0f\n\n\x1d\x00\x00\x80?-\x00\x00\x00\x00\xc8\x01\x01R\x0b\x62\x61tteryUsedB\xd5\x01\n\"com.awrfo.contracts.events.task.v1B\x12TaskCompletedProtoP\x01\xa2\x02\x04\x41\x43\x45T\xaa\x02\x1e\x41wrfo.Contracts.Events.Task.V1\xca\x02\x1e\x41wrfo\\Contracts\\Events\\Task\\V1\xe2\x02*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\xea\x02\"Awrfo::Contracts::Events::Task::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,16 +35,14 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'awrfo.contracts.events.task
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\"com.awrfo.contracts.events.task.v1B\022TaskCompletedProtoP\001\242\002\004ACET\252\002\036Awrfo.Contracts.Events.Task.V1\312\002\036Awrfo\\Contracts\\Events\\Task\\V1\342\002*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\352\002\"Awrfo::Contracts::Events::Task::V1'
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['task_id']._loaded_options = None
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['task_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['robot_id']._loaded_options = None
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['robot_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['duration_s']._loaded_options = None
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['duration_s']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['battery_used']._loaded_options = None
-  _globals['_TASKCOMPLETEDPAYLOAD'].fields_by_name['battery_used']._serialized_options = b'\272H\017\n\n\035\000\000\200?-\000\000\000\000\310\001\001'
-  _globals['_TASKCOMPLETEDPAYLOAD']._serialized_start=215
-  _globals['_TASKCOMPLETEDPAYLOAD']._serialized_end=436
-  _globals['_TASKCOMPLETEDEVENT']._serialized_start=439
-  _globals['_TASKCOMPLETEDEVENT']._serialized_end=627
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['task_id']._loaded_options = None
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['task_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['robot_id']._loaded_options = None
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['robot_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['duration_s']._loaded_options = None
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['duration_s']._serialized_options = b'\272H\003\310\001\001'
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['battery_used']._loaded_options = None
+  _globals['_TASKCOMPLETEDEVENT'].fields_by_name['battery_used']._serialized_options = b'\272H\017\n\n\035\000\000\200?-\000\000\000\000\310\001\001'
+  _globals['_TASKCOMPLETEDEVENT']._serialized_start=215
+  _globals['_TASKCOMPLETEDEVENT']._serialized_end=522
 # @@protoc_insertion_point(module_scope)

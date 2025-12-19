@@ -24,22 +24,18 @@ WAITING: RobotStateType
 PICKING: RobotStateType
 DROPPING: RobotStateType
 
-class RobotStatePayload(_message.Message):
-    __slots__ = ()
-    ID_FIELD_NUMBER: _ClassVar[int]
-    POSITION_FIELD_NUMBER: _ClassVar[int]
-    BATTERY_FIELD_NUMBER: _ClassVar[int]
-    STATE_FIELD_NUMBER: _ClassVar[int]
-    id: str
-    position: _coordinate_pb2.Coordinate
-    battery: float
-    state: RobotStateType
-    def __init__(self, id: _Optional[str] = ..., position: _Optional[_Union[_coordinate_pb2.Coordinate, _Mapping]] = ..., battery: _Optional[float] = ..., state: _Optional[_Union[RobotStateType, str]] = ...) -> None: ...
-
 class RobotState(_message.Message):
     __slots__ = ()
     ENVELOPE_FIELD_NUMBER: _ClassVar[int]
-    PAYLOAD_FIELD_NUMBER: _ClassVar[int]
+    ID_FIELD_NUMBER: _ClassVar[int]
+    TS_MS_FIELD_NUMBER: _ClassVar[int]
+    POSITION_FIELD_NUMBER: _ClassVar[int]
+    BATTERY_FIELD_NUMBER: _ClassVar[int]
+    STATE_FIELD_NUMBER: _ClassVar[int]
     envelope: _schema_envelope_pb2.SchemaEnvelope
-    payload: RobotStatePayload
-    def __init__(self, envelope: _Optional[_Union[_schema_envelope_pb2.SchemaEnvelope, _Mapping]] = ..., payload: _Optional[_Union[RobotStatePayload, _Mapping]] = ...) -> None: ...
+    id: str
+    ts_ms: int
+    position: _coordinate_pb2.Coordinate
+    battery: float
+    state: RobotStateType
+    def __init__(self, envelope: _Optional[_Union[_schema_envelope_pb2.SchemaEnvelope, _Mapping]] = ..., id: _Optional[str] = ..., ts_ms: _Optional[int] = ..., position: _Optional[_Union[_coordinate_pb2.Coordinate, _Mapping]] = ..., battery: _Optional[float] = ..., state: _Optional[_Union[RobotStateType, str]] = ...) -> None: ...

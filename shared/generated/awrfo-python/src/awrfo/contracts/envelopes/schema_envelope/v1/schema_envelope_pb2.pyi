@@ -11,12 +11,12 @@ DESCRIPTOR: _descriptor.FileDescriptor
 
 class SchemaEnvelope(_message.Message):
     __slots__ = ()
-    TIME_S_FIELD_NUMBER: _ClassVar[int]
+    TS_MS_FIELD_NUMBER: _ClassVar[int]
     OCCURRED_AT_FIELD_NUMBER: _ClassVar[int]
     PRODUCER_FIELD_NUMBER: _ClassVar[int]
     ENVELOPE_VERSION_FIELD_NUMBER: _ClassVar[int]
-    time_s: float
+    ts_ms: int
     occurred_at: _timestamp_pb2.Timestamp
     producer: str
     envelope_version: int
-    def __init__(self, time_s: _Optional[float] = ..., occurred_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., producer: _Optional[str] = ..., envelope_version: _Optional[int] = ...) -> None: ...
+    def __init__(self, ts_ms: _Optional[int] = ..., occurred_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., producer: _Optional[str] = ..., envelope_version: _Optional[int] = ...) -> None: ...

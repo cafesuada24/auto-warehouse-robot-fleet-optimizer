@@ -33,7 +33,7 @@ message EventEnvelope {
     (buf.validate.field).required = true
   ]; 
 
-  uint64 time_s = 3 [
+  uint64 ts_ms = 3 [
     (buf.validate.field).required = true
   ];
 
