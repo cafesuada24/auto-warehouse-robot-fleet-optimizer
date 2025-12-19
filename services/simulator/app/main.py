@@ -17,6 +17,7 @@ from fastapi import FastAPI
 
 from app.infra.bus.event_bus import EventBus
 from app.infra.bus.redis_bus import RedisBusAdapter, RedisBusMessage
+from app.infra.mappers.action_command_mapper import serialized_proto_to_command
 from app.world.models.map import Map
 from app.world.models.robot import Robot
 
@@ -86,6 +87,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
 
     await asyncio.sleep(0.1)
 
+    event_bus.subscribe('COMMAND', lambda msg: simulator.register_command(serialized_proto_to_command(msg['data'])))
+    event_bus.start()
     sim_fut = asyncio.run_coroutine_threadsafe(
         simulator.start(),
         loop=loop,
@@ -95,7 +98,6 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     #     simulator=simulator,
     #     event_bus=event_bus,
     # )
-    event_bus.start()
 
     yield
 
