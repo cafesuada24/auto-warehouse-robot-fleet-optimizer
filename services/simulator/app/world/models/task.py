@@ -1,8 +1,16 @@
+# Copyright (C) 2025 Cafesuada - All Rights Reserved
+#
+# This source code is protected under international copyright law.  All rights
+# reserved and protected by the copyright holders.
+# This file is confidential and only available to authorized individuals with the
+# permission of the copyright holders.  If you encounter this file and do not have
+# permission, please contact the copyright holders and delete this file.
 
 import dataclasses
 from enum import Enum
 from uuid import uuid4
 
+from pydantic import NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
@@ -14,15 +22,38 @@ class TaskStatus(Enum):
     ASSIGNED = 2
     PICKED = 3
     COMPLETED = 4
+    FAILED = 5
+    CANCELLED = 6
 
-@dataclass
-class Task:
 
+@dataclasses.dataclass(frozen=True)
+class TaskSnapshot:
+    id: IDType
     pickup: Position
     dropoff: Position
 
     status: TaskStatus
 
+    deadline_ms: NonNegativeInt
+
+
+@dataclass
+class Task:
+    pickup: Position
+    dropoff: Position
+
+    status: TaskStatus
+
+    deadline_ms: NonNegativeInt
+
     id: IDType = dataclasses.field(default_factory=uuid4)
 
-
+    def snapshot(self) -> TaskSnapshot:
+        """Create a snapshot of the task."""
+        return TaskSnapshot(
+            id= self.id,
+            pickup=self.pickup,
+            dropoff=self.dropoff,
+            status=self.status,
+            deadline_ms=self.deadline_ms,
+        )
