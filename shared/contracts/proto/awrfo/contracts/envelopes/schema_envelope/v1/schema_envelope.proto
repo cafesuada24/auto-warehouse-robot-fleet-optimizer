@@ -9,10 +9,9 @@ option java_multiple_files = true;
 option java_package = "com.awrfo.contracts.envelopes.schema_envelope.v1";
 
 message SchemaEnvelope {
-  float time_s = 1 [
+  uint64 ts_ms = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).float.gte = 0.0
-
   ];
 
   // When the event happened (UTC).

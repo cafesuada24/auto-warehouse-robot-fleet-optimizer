@@ -27,7 +27,7 @@ from google.protobuf import duration_pb2 as google_dot_protobuf_dot_duration__pb
 from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as awrfo_dot_contracts_dot_schemas_dot_common_dot_v1_dot_coordinate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n0awrfo/contracts/commands/v1/action_command.proto\x12\x1b\x61wrfo.contracts.commands.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\"\xbc\x01\n\rCommandParams\x12J\n\x06target\x18\x01 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateH\x00R\x06target\x88\x01\x01\x12\x45\n\nduration_s\x18\x02 \x01(\x0b\x32\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01H\x01R\tdurationS\x88\x01\x01\x42\t\n\x07_targetB\r\n\x0b_duration_s\"\xec\x01\n\rActionCommand\x12\x1b\n\x02id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x02id\x12&\n\x08robot_id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x07robotId\x12J\n\x07\x63ommand\x18\x03 \x01(\x0e\x32(.awrfo.contracts.commands.v1.CommandTypeB\x06\xbaH\x03\xc8\x01\x01R\x07\x63ommand\x12J\n\x06params\x18\x04 \x01(\x0b\x32*.awrfo.contracts.commands.v1.CommandParamsB\x06\xbaH\x03\xc8\x01\x01R\x06params*=\n\x0b\x43ommandType\x12\x08\n\x04WAIT\x10\x00\x12\x0b\n\x07MOVE_TO\x10\x01\x12\n\n\x06PICKUP\x10\x02\x12\x0b\n\x07\x44ROPOFF\x10\x03\x42\xc4\x01\n\x1f\x63om.awrfo.contracts.commands.v1B\x12\x41\x63tionCommandProtoP\x01\xa2\x02\x03\x41\x43\x43\xaa\x02\x1b\x41wrfo.Contracts.Commands.V1\xca\x02\x1b\x41wrfo\\Contracts\\Commands\\V1\xe2\x02\'Awrfo\\Contracts\\Commands\\V1\\GPBMetadata\xea\x02\x1e\x41wrfo::Contracts::Commands::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n0awrfo/contracts/commands/v1/action_command.proto\x12\x1b\x61wrfo.contracts.commands.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\"\xf2\x03\n\rActionCommand\x12\x1b\n\x02id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x02id\x12\x1b\n\x05ts_ms\x18\x02 \x01(\x04\x42\x06\xbaH\x03\xc8\x01\x01R\x04tsMs\x12&\n\x08robot_id\x18\x03 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x07robotId\x12\x44\n\x04type\x18\x04 \x01(\x0e\x32(.awrfo.contracts.commands.v1.CommandTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12H\n\x0b\x61ssign_task\x18\x05 \x01(\x0b\x32\'.awrfo.contracts.commands.v1.AssignTaskR\nassignTask\x12H\n\x0b\x63\x61ncel_task\x18\x06 \x01(\x0b\x32\'.awrfo.contracts.commands.v1.CancelTaskR\ncancelTask\x12<\n\x07move_to\x18\x07 \x01(\x0b\x32#.awrfo.contracts.commands.v1.MoveToR\x06moveTo\x12\x35\n\x04wait\x18\x08 \x01(\x0b\x32!.awrfo.contracts.commands.v1.WaitR\x04wait:0\xbaH-\"+\n\x0b\x61ssign_task\n\x0b\x63\x61ncel_task\n\x07move_to\n\x04wait\x10\x01\"2\n\nAssignTask\x12$\n\x07task_id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x06taskId\"b\n\nCancelTask\x12$\n\x07task_id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x06taskId\x12#\n\x06reason\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x00H\x00R\x06reason\x88\x01\x01\x42\t\n\x07_reason\"\x91\x01\n\x06MoveTo\x12\x45\n\x06target\x18\x01 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateR\x06target\x12\x31\n\narrive_eps\x18\x03 \x01(\x02\x42\r\xbaH\n\n\x05-\x00\x00\x00\x00\xc8\x01\x00H\x00R\tarriveEps\x88\x01\x01\x42\r\n\x0b_arrive_eps\"\'\n\x04Wait\x12\x1f\n\x0b\x64uration_ms\x18\x01 \x01(\x04R\ndurationMs*\x98\x01\n\x0b\x43ommandType\x12\x1c\n\x18\x43OMMAND_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n\x18\x43OMMAND_TYPE_ASSIGN_TASK\x10\x01\x12\x1c\n\x18\x43OMMAND_TYPE_CANCEL_TASK\x10\x02\x12\x18\n\x14\x43OMMAND_TYPE_MOVE_TO\x10\x03\x12\x15\n\x11\x43OMMAND_TYPE_WAIT\x10\x04\x42\xc4\x01\n\x1f\x63om.awrfo.contracts.commands.v1B\x12\x41\x63tionCommandProtoP\x01\xa2\x02\x03\x41\x43\x43\xaa\x02\x1b\x41wrfo.Contracts.Commands.V1\xca\x02\x1b\x41wrfo\\Contracts\\Commands\\V1\xe2\x02\'Awrfo\\Contracts\\Commands\\V1\\GPBMetadata\xea\x02\x1e\x41wrfo::Contracts::Commands::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,20 +35,34 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'awrfo.contracts.commands.v1
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\037com.awrfo.contracts.commands.v1B\022ActionCommandProtoP\001\242\002\003ACC\252\002\033Awrfo.Contracts.Commands.V1\312\002\033Awrfo\\Contracts\\Commands\\V1\342\002\'Awrfo\\Contracts\\Commands\\V1\\GPBMetadata\352\002\036Awrfo::Contracts::Commands::V1'
-  _globals['_COMMANDPARAMS'].fields_by_name['duration_s']._loaded_options = None
-  _globals['_COMMANDPARAMS'].fields_by_name['duration_s']._serialized_options = b'\272H\003\310\001\001'
   _globals['_ACTIONCOMMAND'].fields_by_name['id']._loaded_options = None
   _globals['_ACTIONCOMMAND'].fields_by_name['id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_ACTIONCOMMAND'].fields_by_name['ts_ms']._loaded_options = None
+  _globals['_ACTIONCOMMAND'].fields_by_name['ts_ms']._serialized_options = b'\272H\003\310\001\001'
   _globals['_ACTIONCOMMAND'].fields_by_name['robot_id']._loaded_options = None
   _globals['_ACTIONCOMMAND'].fields_by_name['robot_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
-  _globals['_ACTIONCOMMAND'].fields_by_name['command']._loaded_options = None
-  _globals['_ACTIONCOMMAND'].fields_by_name['command']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_ACTIONCOMMAND'].fields_by_name['params']._loaded_options = None
-  _globals['_ACTIONCOMMAND'].fields_by_name['params']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_COMMANDTYPE']._serialized_start=624
-  _globals['_COMMANDTYPE']._serialized_end=685
-  _globals['_COMMANDPARAMS']._serialized_start=195
-  _globals['_COMMANDPARAMS']._serialized_end=383
-  _globals['_ACTIONCOMMAND']._serialized_start=386
-  _globals['_ACTIONCOMMAND']._serialized_end=622
+  _globals['_ACTIONCOMMAND'].fields_by_name['type']._loaded_options = None
+  _globals['_ACTIONCOMMAND'].fields_by_name['type']._serialized_options = b'\272H\003\310\001\001'
+  _globals['_ACTIONCOMMAND']._loaded_options = None
+  _globals['_ACTIONCOMMAND']._serialized_options = b'\272H-\"+\n\013assign_task\n\013cancel_task\n\007move_to\n\004wait\020\001'
+  _globals['_ASSIGNTASK'].fields_by_name['task_id']._loaded_options = None
+  _globals['_ASSIGNTASK'].fields_by_name['task_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_CANCELTASK'].fields_by_name['task_id']._loaded_options = None
+  _globals['_CANCELTASK'].fields_by_name['task_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_CANCELTASK'].fields_by_name['reason']._loaded_options = None
+  _globals['_CANCELTASK'].fields_by_name['reason']._serialized_options = b'\272H\003\310\001\000'
+  _globals['_MOVETO'].fields_by_name['arrive_eps']._loaded_options = None
+  _globals['_MOVETO'].fields_by_name['arrive_eps']._serialized_options = b'\272H\n\n\005-\000\000\000\000\310\001\000'
+  _globals['_COMMANDTYPE']._serialized_start=1037
+  _globals['_COMMANDTYPE']._serialized_end=1189
+  _globals['_ACTIONCOMMAND']._serialized_start=195
+  _globals['_ACTIONCOMMAND']._serialized_end=693
+  _globals['_ASSIGNTASK']._serialized_start=695
+  _globals['_ASSIGNTASK']._serialized_end=745
+  _globals['_CANCELTASK']._serialized_start=747
+  _globals['_CANCELTASK']._serialized_end=845
+  _globals['_MOVETO']._serialized_start=848
+  _globals['_MOVETO']._serialized_end=993
+  _globals['_WAIT']._serialized_start=995
+  _globals['_WAIT']._serialized_end=1034
 # @@protoc_insertion_point(module_scope)
