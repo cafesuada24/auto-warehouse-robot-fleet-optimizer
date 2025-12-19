@@ -10,22 +10,16 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class TaskCompletedPayload(_message.Message):
+class TaskCompletedEvent(_message.Message):
     __slots__ = ()
+    ENVELOPE_FIELD_NUMBER: _ClassVar[int]
     TASK_ID_FIELD_NUMBER: _ClassVar[int]
     ROBOT_ID_FIELD_NUMBER: _ClassVar[int]
     DURATION_S_FIELD_NUMBER: _ClassVar[int]
     BATTERY_USED_FIELD_NUMBER: _ClassVar[int]
+    envelope: _event_envelope_pb2.EventEnvelope
     task_id: str
     robot_id: str
     duration_s: _duration_pb2.Duration
     battery_used: float
-    def __init__(self, task_id: _Optional[str] = ..., robot_id: _Optional[str] = ..., duration_s: _Optional[_Union[datetime.timedelta, _duration_pb2.Duration, _Mapping]] = ..., battery_used: _Optional[float] = ...) -> None: ...
-
-class TaskCompletedEvent(_message.Message):
-    __slots__ = ()
-    ENVELOPE_FIELD_NUMBER: _ClassVar[int]
-    PAYLOAD_FIELD_NUMBER: _ClassVar[int]
-    envelope: _event_envelope_pb2.EventEnvelope
-    payload: TaskCompletedPayload
-    def __init__(self, envelope: _Optional[_Union[_event_envelope_pb2.EventEnvelope, _Mapping]] = ..., payload: _Optional[_Union[TaskCompletedPayload, _Mapping]] = ...) -> None: ...
+    def __init__(self, envelope: _Optional[_Union[_event_envelope_pb2.EventEnvelope, _Mapping]] = ..., task_id: _Optional[str] = ..., robot_id: _Optional[str] = ..., duration_s: _Optional[_Union[datetime.timedelta, _duration_pb2.Duration, _Mapping]] = ..., battery_used: _Optional[float] = ...) -> None: ...

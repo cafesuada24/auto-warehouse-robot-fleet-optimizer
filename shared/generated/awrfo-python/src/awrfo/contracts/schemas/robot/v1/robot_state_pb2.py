@@ -27,7 +27,7 @@ from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as awrfo_dot_contra
 from awrfo.contracts.envelopes.schema_envelope.v1 import schema_envelope_pb2 as awrfo_dot_contracts_dot_envelopes_dot_schema__envelope_dot_v1_dot_schema__envelope__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2awrfo/contracts/schemas/robot/v1/robot_state.proto\x12 awrfo.contracts.schemas.robot.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\x1a\x42\x61wrfo/contracts/envelopes/schema_envelope/v1/schema_envelope.proto\"\x81\x02\n\x11RobotStatePayload\x12\x1b\n\x02id\x18\x01 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x02id\x12Q\n\x08position\x18\x02 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01R\x08position\x12,\n\x07\x62\x61ttery\x18\x03 \x01(\x02\x42\x12\xbaH\x0f\n\n\x1d\x00\x00\x80?-\x00\x00\x00\x00\xc8\x01\x01R\x07\x62\x61ttery\x12N\n\x05state\x18\x04 \x01(\x0e\x32\x30.awrfo.contracts.schemas.robot.v1.RobotStateTypeB\x06\xbaH\x03\xc8\x01\x01R\x05state\"\xb5\x01\n\nRobotState\x12X\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32<.awrfo.contracts.envelopes.schema_envelope.v1.SchemaEnvelopeR\x08\x65nvelope\x12M\n\x07payload\x18\x02 \x01(\x0b\x32\x33.awrfo.contracts.schemas.robot.v1.RobotStatePayloadR\x07payload*[\n\x0eRobotStateType\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x08\n\x04IDLE\x10\x01\x12\n\n\x06MOVING\x10\x02\x12\x0b\n\x07WAITING\x10\x03\x12\x0b\n\x07PICKING\x10\x04\x12\x0c\n\x08\x44ROPPING\x10\x05\x42\xdc\x01\n$com.awrfo.contracts.schemas.robot.v1B\x0fRobotStateProtoP\x01\xa2\x02\x04\x41\x43SR\xaa\x02 Awrfo.Contracts.Schemas.Robot.V1\xca\x02 Awrfo\\Contracts\\Schemas\\Robot\\V1\xe2\x02,Awrfo\\Contracts\\Schemas\\Robot\\V1\\GPBMetadata\xea\x02$Awrfo::Contracts::Schemas::Robot::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n2awrfo/contracts/schemas/robot/v1/robot_state.proto\x12 awrfo.contracts.schemas.robot.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\x1a\x42\x61wrfo/contracts/envelopes/schema_envelope/v1/schema_envelope.proto\"\xf1\x02\n\nRobotState\x12X\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32<.awrfo.contracts.envelopes.schema_envelope.v1.SchemaEnvelopeR\x08\x65nvelope\x12\x1b\n\x02id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x02id\x12\x1b\n\x05ts_ms\x18\x03 \x01(\x04\x42\x06\xbaH\x03\xc8\x01\x01R\x04tsMs\x12Q\n\x08position\x18\x04 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01R\x08position\x12,\n\x07\x62\x61ttery\x18\x05 \x01(\x02\x42\x12\xbaH\x0f\n\n\x1d\x00\x00\x80?-\x00\x00\x00\x00\xc8\x01\x01R\x07\x62\x61ttery\x12N\n\x05state\x18\x06 \x01(\x0e\x32\x30.awrfo.contracts.schemas.robot.v1.RobotStateTypeB\x06\xbaH\x03\xc8\x01\x01R\x05state*[\n\x0eRobotStateType\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x08\n\x04IDLE\x10\x01\x12\n\n\x06MOVING\x10\x02\x12\x0b\n\x07WAITING\x10\x03\x12\x0b\n\x07PICKING\x10\x04\x12\x0c\n\x08\x44ROPPING\x10\x05\x42\xdc\x01\n$com.awrfo.contracts.schemas.robot.v1B\x0fRobotStateProtoP\x01\xa2\x02\x04\x41\x43SR\xaa\x02 Awrfo.Contracts.Schemas.Robot.V1\xca\x02 Awrfo\\Contracts\\Schemas\\Robot\\V1\xe2\x02,Awrfo\\Contracts\\Schemas\\Robot\\V1\\GPBMetadata\xea\x02$Awrfo::Contracts::Schemas::Robot::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,18 +35,18 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'awrfo.contracts.schemas.rob
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n$com.awrfo.contracts.schemas.robot.v1B\017RobotStateProtoP\001\242\002\004ACSR\252\002 Awrfo.Contracts.Schemas.Robot.V1\312\002 Awrfo\\Contracts\\Schemas\\Robot\\V1\342\002,Awrfo\\Contracts\\Schemas\\Robot\\V1\\GPBMetadata\352\002$Awrfo::Contracts::Schemas::Robot::V1'
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['id']._loaded_options = None
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['position']._loaded_options = None
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['position']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['battery']._loaded_options = None
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['battery']._serialized_options = b'\272H\017\n\n\035\000\000\200?-\000\000\000\000\310\001\001'
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['state']._loaded_options = None
-  _globals['_ROBOTSTATEPAYLOAD'].fields_by_name['state']._serialized_options = b'\272H\003\310\001\001'
-  _globals['_ROBOTSTATETYPE']._serialized_start=681
-  _globals['_ROBOTSTATETYPE']._serialized_end=772
-  _globals['_ROBOTSTATEPAYLOAD']._serialized_start=238
-  _globals['_ROBOTSTATEPAYLOAD']._serialized_end=495
-  _globals['_ROBOTSTATE']._serialized_start=498
-  _globals['_ROBOTSTATE']._serialized_end=679
+  _globals['_ROBOTSTATE'].fields_by_name['id']._loaded_options = None
+  _globals['_ROBOTSTATE'].fields_by_name['id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_ROBOTSTATE'].fields_by_name['ts_ms']._loaded_options = None
+  _globals['_ROBOTSTATE'].fields_by_name['ts_ms']._serialized_options = b'\272H\003\310\001\001'
+  _globals['_ROBOTSTATE'].fields_by_name['position']._loaded_options = None
+  _globals['_ROBOTSTATE'].fields_by_name['position']._serialized_options = b'\272H\003\310\001\001'
+  _globals['_ROBOTSTATE'].fields_by_name['battery']._loaded_options = None
+  _globals['_ROBOTSTATE'].fields_by_name['battery']._serialized_options = b'\272H\017\n\n\035\000\000\200?-\000\000\000\000\310\001\001'
+  _globals['_ROBOTSTATE'].fields_by_name['state']._loaded_options = None
+  _globals['_ROBOTSTATE'].fields_by_name['state']._serialized_options = b'\272H\003\310\001\001'
+  _globals['_ROBOTSTATETYPE']._serialized_start=609
+  _globals['_ROBOTSTATETYPE']._serialized_end=700
+  _globals['_ROBOTSTATE']._serialized_start=238
+  _globals['_ROBOTSTATE']._serialized_end=607
 # @@protoc_insertion_point(module_scope)

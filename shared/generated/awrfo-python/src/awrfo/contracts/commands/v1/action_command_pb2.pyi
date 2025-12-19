@@ -1,5 +1,3 @@
-import datetime
-
 from buf.validate import validate_pb2 as _validate_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
 from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as _coordinate_pb2
@@ -13,31 +11,61 @@ DESCRIPTOR: _descriptor.FileDescriptor
 
 class CommandType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
-    WAIT: _ClassVar[CommandType]
-    MOVE_TO: _ClassVar[CommandType]
-    PICKUP: _ClassVar[CommandType]
-    DROPOFF: _ClassVar[CommandType]
-WAIT: CommandType
-MOVE_TO: CommandType
-PICKUP: CommandType
-DROPOFF: CommandType
-
-class CommandParams(_message.Message):
-    __slots__ = ()
-    TARGET_FIELD_NUMBER: _ClassVar[int]
-    DURATION_S_FIELD_NUMBER: _ClassVar[int]
-    target: _coordinate_pb2.Coordinate
-    duration_s: _duration_pb2.Duration
-    def __init__(self, target: _Optional[_Union[_coordinate_pb2.Coordinate, _Mapping]] = ..., duration_s: _Optional[_Union[datetime.timedelta, _duration_pb2.Duration, _Mapping]] = ...) -> None: ...
+    COMMAND_TYPE_UNSPECIFIED: _ClassVar[CommandType]
+    COMMAND_TYPE_ASSIGN_TASK: _ClassVar[CommandType]
+    COMMAND_TYPE_CANCEL_TASK: _ClassVar[CommandType]
+    COMMAND_TYPE_MOVE_TO: _ClassVar[CommandType]
+    COMMAND_TYPE_WAIT: _ClassVar[CommandType]
+COMMAND_TYPE_UNSPECIFIED: CommandType
+COMMAND_TYPE_ASSIGN_TASK: CommandType
+COMMAND_TYPE_CANCEL_TASK: CommandType
+COMMAND_TYPE_MOVE_TO: CommandType
+COMMAND_TYPE_WAIT: CommandType
 
 class ActionCommand(_message.Message):
     __slots__ = ()
     ID_FIELD_NUMBER: _ClassVar[int]
+    TS_MS_FIELD_NUMBER: _ClassVar[int]
     ROBOT_ID_FIELD_NUMBER: _ClassVar[int]
-    COMMAND_FIELD_NUMBER: _ClassVar[int]
-    PARAMS_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    ASSIGN_TASK_FIELD_NUMBER: _ClassVar[int]
+    CANCEL_TASK_FIELD_NUMBER: _ClassVar[int]
+    MOVE_TO_FIELD_NUMBER: _ClassVar[int]
+    WAIT_FIELD_NUMBER: _ClassVar[int]
     id: str
+    ts_ms: int
     robot_id: str
-    command: CommandType
-    params: CommandParams
-    def __init__(self, id: _Optional[str] = ..., robot_id: _Optional[str] = ..., command: _Optional[_Union[CommandType, str]] = ..., params: _Optional[_Union[CommandParams, _Mapping]] = ...) -> None: ...
+    type: CommandType
+    assign_task: AssignTask
+    cancel_task: CancelTask
+    move_to: MoveTo
+    wait: Wait
+    def __init__(self, id: _Optional[str] = ..., ts_ms: _Optional[int] = ..., robot_id: _Optional[str] = ..., type: _Optional[_Union[CommandType, str]] = ..., assign_task: _Optional[_Union[AssignTask, _Mapping]] = ..., cancel_task: _Optional[_Union[CancelTask, _Mapping]] = ..., move_to: _Optional[_Union[MoveTo, _Mapping]] = ..., wait: _Optional[_Union[Wait, _Mapping]] = ...) -> None: ...
+
+class AssignTask(_message.Message):
+    __slots__ = ()
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    task_id: str
+    def __init__(self, task_id: _Optional[str] = ...) -> None: ...
+
+class CancelTask(_message.Message):
+    __slots__ = ()
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
+    task_id: str
+    reason: str
+    def __init__(self, task_id: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
+
+class MoveTo(_message.Message):
+    __slots__ = ()
+    TARGET_FIELD_NUMBER: _ClassVar[int]
+    ARRIVE_EPS_FIELD_NUMBER: _ClassVar[int]
+    target: _coordinate_pb2.Coordinate
+    arrive_eps: float
+    def __init__(self, target: _Optional[_Union[_coordinate_pb2.Coordinate, _Mapping]] = ..., arrive_eps: _Optional[float] = ...) -> None: ...
+
+class Wait(_message.Message):
+    __slots__ = ()
+    DURATION_MS_FIELD_NUMBER: _ClassVar[int]
+    duration_ms: int
+    def __init__(self, duration_ms: _Optional[int] = ...) -> None: ...

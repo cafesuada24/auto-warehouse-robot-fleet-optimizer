@@ -7,17 +7,11 @@ import "google/protobuf/duration.proto";
 import "awrfo/contracts/schemas/common/v1/coordinate.proto";
 
 enum CommandType {
-  WAIT = 0;
-  MOVE_TO = 1;
-  PICKUP = 2;
-  DROPOFF = 3;
-}
-
-message CommandParams {
-  optional awrfo.contracts.schemas.common.v1.Coordinate target = 1;
-  optional google.protobuf.Duration duration_s = 2 [
-    (buf.validate.field).required = true
-  ];
+  COMMAND_TYPE_UNSPECIFIED = 0;
+  COMMAND_TYPE_ASSIGN_TASK = 1;
+  COMMAND_TYPE_CANCEL_TASK = 2;
+  COMMAND_TYPE_MOVE_TO = 3;
+  COMMAND_TYPE_WAIT = 4;
 }
 
 message ActionCommand {
@@ -26,16 +20,56 @@ message ActionCommand {
     (buf.validate.field).string.uuid = true
   ];
 
-  string robot_id = 2 [
+  uint64 ts_ms = 2 [(buf.validate.field).required = true];
+
+  string robot_id = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uuid = true
   ];
 
-  CommandType command = 3 [
+  CommandType type = 4 [
     (buf.validate.field).required = true
   ];
 
-  CommandParams params = 4 [
-    (buf.validate.field).required = true
+  option (buf.validate.message).oneof = {
+    fields: [ "assign_task", "cancel_task", "move_to", "wait" ],
+    required: true
+  };
+
+  AssignTask assign_task = 5;
+  CancelTask cancel_task = 6;
+  MoveTo move_to = 7;
+  Wait wait = 8;
+}
+
+message AssignTask {
+  string task_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
   ];
+}
+
+message CancelTask {
+  string task_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uuid = true
+  ];
+
+  optional string reason = 2 [(buf.validate.field).required = false];
+}
+
+message MoveTo {
+  // Target pose in map frame (v1: x,y only).
+  awrfo.contracts.schemas.common.v1.Coordinate target = 1;
+
+  // Optional tolerance for "arrived".
+  optional float arrive_eps = 3 [
+    (buf.validate.field).required = false,
+    (buf.validate.field).float.gte = 0.0
+  ];
+}
+
+message Wait {
+  // Duration to wait.
+  uint64 duration_ms = 1;
 }
