@@ -3,7 +3,7 @@ import dataclasses
 from enum import Enum
 from uuid import uuid4
 
-from pydantic import Field, NonNegativeFloat
+from pydantic import Field, NonNegativeFloat, NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
@@ -17,10 +17,15 @@ class RobotState(Enum):
     PICKING = 4
     DROPPING = 5
 
+class RobotGoalType(Enum):
+    MOVE = 1
+    WAIT = 2
+
 @dataclass
 class RobotGoal:
+    type: RobotGoalType
     pos: Position | None = None
-    wait_remaining: NonNegativeFloat | None = None
+    wait_remaining_ms: NonNegativeInt | None = None
 
 @dataclasses.dataclass(frozen=True)
 class RobotStateSnapshot:

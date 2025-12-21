@@ -13,7 +13,7 @@ from collections.abc import Generator
 from queue import Queue
 from time import monotonic, sleep
 
-from pydantic import NonNegativeFloat, PositiveInt
+from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers import task_mapper
@@ -21,7 +21,7 @@ from app.infra.mappers.robot_state_mapper import snapshot_to_proto
 from app.types import IDType
 
 from .models.command import AssignTaskCommand, CancelTaskCommand, Command, MoveToCommand
-from .models.robot import Robot, RobotGoal, RobotState
+from .models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from .models.sim_clock import SimClock
 from .models.task import Task, TaskStatus
 from .models.world import World
@@ -29,9 +29,9 @@ from .types import Position
 
 
 def StateTransitionIter(task: Task) -> Generator[tuple[RobotState, RobotGoal | None]]:
-    yield (RobotState.MOVING, RobotGoal(pos=task.pickup))
+    yield (RobotState.MOVING, RobotGoal(type=RobotGoalType.MOVE, pos=task.pickup))
     yield (RobotState.PICKING, None)
-    yield (RobotState.MOVING, RobotGoal(pos=task.dropoff))
+    yield (RobotState.MOVING, RobotGoal(type=RobotGoalType.MOVE, pos=task.dropoff))
     yield (RobotState.DROPPING, None)
 
 
@@ -205,14 +205,14 @@ class Simulator[T]:
         elif isinstance(command, CancelTaskCommand):
             self.__cancel_current_task(robot)
         elif isinstance(command, MoveToCommand):  # pyright: ignore
-            robot.intent = RobotGoal(pos=command.pos)
+            robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
 
     def __is_intent_done(self, robot: Robot) -> bool:
         if robot.intent is None:
             return True
 
-        if robot.intent.wait_remaining is not None:
-            return robot.intent.wait_remaining == 0.0
+        if robot.intent.type == RobotGoalType.WAIT:
+            return robot.intent.wait_remaining_ms == 0.0
 
         assert robot.intent.pos is not None
 
@@ -280,6 +280,7 @@ class Simulator[T]:
             robot.pos = new_pos
 
     def __update_wait_remaining(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
-        assert robot.intent is not None and robot.intent.wait_remaining is not None
+        assert robot.intent is not None and robot.intent.wait_remaining_ms is not None
 
-        robot.intent.wait_remaining = max(0.0, robot.intent.wait_remaining - dt_s)
+        robot.intent.wait_remaining_ms = max(0, robot.intent.wait_remaining_ms - int(dt_s * 1000))
+
