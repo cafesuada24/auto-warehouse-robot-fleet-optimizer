@@ -77,37 +77,41 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     simulator = Simulator(world=world, bus=event_bus)
     context['simulator'] = simulator
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    thread = threading.Thread(
-        target=loop.run_forever,
-        daemon=True,
-    )
-    thread.start()
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # thread = threading.Thread(
+    #     target=loop.run_forever,
+    #     daemon=True,
+    # )
+    # thread.start()
 
-    await asyncio.sleep(0.1)
+    # await asyncio.sleep(0.1)
 
     event_bus.subscribe('COMMAND', lambda msg: simulator.register_command(serialized_proto_to_command(msg['data'])))
     event_bus.start()
-    sim_fut = asyncio.run_coroutine_threadsafe(
-        simulator.start(),
-        loop=loop,
-    )
+    simulator.start()
+    # sim_fut = asyncio.run_coroutine_threadsafe(
+    #     simulator.start(),
+    #     loop=loop,
+    # )
 
     # _attach_command_handlers(
     #     simulator=simulator,
     #     event_bus=event_bus,
     # )
+    # await asyncio.sleep(2.0)
+    # simulator.create_task((10, 20), (50, 10), 5)
+
 
     yield
 
     event_bus.cleanup()
     simulator.stop()
-    sim_fut.cancel()
+    # sim_fut.cancel()
 
-    loop.call_soon_threadsafe(loop.stop)
-    thread.join(5)
-    loop.close()
+    # loop.call_soon_threadsafe(loop.stop)
+    # thread.join(5)
+    # loop.close()
     context = {}
 
 

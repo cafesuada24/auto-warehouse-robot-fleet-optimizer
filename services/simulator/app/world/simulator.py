@@ -6,15 +6,14 @@
 # permission of the copyright holders.  If you encounter this file and do not have
 # permission, please contact the copyright holders and delete this file.
 
-import asyncio
 import math
 import queue
 import threading
 from collections.abc import Generator
 from queue import Queue
-from time import monotonic
+from time import monotonic, sleep
 
-from pydantic import NonNegativeFloat
+from pydantic import NonNegativeFloat, PositiveInt
 
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers import task_mapper
@@ -23,6 +22,7 @@ from app.types import IDType
 
 from .models.command import AssignTaskCommand, CancelTaskCommand, Command, MoveToCommand
 from .models.robot import Robot, RobotGoal, RobotState
+from .models.sim_clock import SimClock
 from .models.task import Task, TaskStatus
 from .models.world import World
 from .types import Position
@@ -42,9 +42,24 @@ def distance(a: Position, b: Position) -> float:
 
 
 class Simulator[T]:
-    def __init__(self, world: World, bus: EventBus[T]) -> None:
+    def __init__(
+        self,
+        world: World,
+        bus: EventBus[T],
+        tick_hz: PositiveInt = 10,
+    ) -> None:
+        self.__bus = bus
+
+        self.__tick_hz = tick_hz
+        self.__tick_ms = 1000 // self.__tick_hz
+        self.__dt_s = self.__tick_ms / 1000.0
+
         self.__world = world
-        self.__tick_hz = 10
+        self.__world.time_ms = 0
+        self.__world.tick_ms = self.__tick_ms
+
+        self.__clock = SimClock(self.__tick_ms)
+
         self.__command_queue = Queue[Command]()
 
         self.__tasks: dict[IDType, Task] = {}
@@ -52,9 +67,8 @@ class Simulator[T]:
             IDType, Generator[tuple[RobotState, RobotGoal | None]]
         ] = {}
 
-        self.__bus = bus
-        self.__stop = threading.Event()
-        self.__t0: float | None = None
+        self.__stop_ev = threading.Event()
+        self.__thread: threading.Thread | None = None
 
     def register_command(self, command: Command) -> None:
         """Register a command to be executed."""
@@ -71,46 +85,71 @@ class Simulator[T]:
             pickup=pickup,
             dropoff=dropoff,
             status=TaskStatus.CREATED,
-            deadline_ms=int(self.sim_time + duration_s * 1000),
+            deadline_ms=self.sim_time_ms + int(duration_s * 1000),
         )
         self.__tasks[task.id] = task
         self.__state_transition_iters[task.id] = StateTransitionIter(task)
 
         event_to_publish = task_mapper.taskcreated_snapshot_to_proto(
             task.snapshot(),
-            self.sim_time,
+            self.sim_time_ms,
         )
         self.__bus.publish_event('TASK:CREATED', event_to_publish.SerializeToString())
 
     @property
-    def sim_time(self) -> float:
-        """Return the simulator time in seconds."""
-        if self.__t0 is None:
-            raise ValueError('Cannot access sim_time: Invalid t0 reference')
+    def sim_time_ms(self) -> int:
+        return self.__clock.time_ms()
 
-        return monotonic() - self.__t0
+    @property
+    def sim_time_s(self) -> float:
+        return self.__clock.time_s()
 
-    async def start(self) -> None:
+    def start(self) -> None:
         """Start the simulation."""
-        self.__stop.clear()
-        self.__t0 = monotonic()
-        dt = 1.0 / self.__tick_hz
-        try:
-            while not self.__stop.is_set():
-                t0 = monotonic()
-                await self.__tick(dt_s=max(0.0, dt - 0.001))
-                elapsed = monotonic() - t0
-                await asyncio.sleep(max(0, dt - elapsed))
+        if self.__thread is not None and self.__thread.is_alive():
+            return
 
-        except Exception as e:
-            print(f'Simulator crashed: {e!r}')
+        self.__stop_ev.clear()
+        self.__clock.start(reset=True)
+
+        self.__thread = threading.Thread(
+            target=self.__run_loop,
+            name='sim-loop',
+            daemon=True,
+        )
+        self.__thread.start()
 
     def stop(self) -> None:
         """Stop event loop."""
-        self.__stop.set()
-        self.__t0 = None
+        self.__stop_ev.set()
+        self.__clock.stop()
+        if self.__thread is not None:
+            self.__thread.join(timeout=2.0)
+        self.__thread = None
 
-    async def __tick(self, dt_s: NonNegativeFloat) -> None:
+    def __run_loop(self) -> None:
+        tick_period_s = 1.0 / self.__tick_hz
+        next_deadline = monotonic()
+
+        try:
+            while not self.__stop_ev.is_set():
+                now = monotonic()
+                if now < next_deadline:
+                    sleep(next_deadline - now)
+
+                self.__clock.tick()
+
+                self.__world.time_ms = self.__clock.time_ms()
+
+                self.__tick(dt_s=self.__dt_s)
+
+                next_deadline += tick_period_s
+
+        except Exception as e:
+            print(f'Simulator crashed, stopping simulator: {e!r}')
+            self.stop()
+
+    def __tick(self, dt_s: NonNegativeFloat) -> None:
         """Move the simulator forward an amount of 'dt' time."""
         # t_end = monotonic() + dt
         while True:
@@ -129,12 +168,17 @@ class Simulator[T]:
     def __publish_task_completed_event(self, task_id: IDType, robot_id: IDType) -> None:
         task_snapshot = self.__tasks[task_id].snapshot()
         proto_msg = task_mapper.taskcompleted_snapshot_to_proto(
-            task_snapshot, str(robot_id), self.sim_time
+            task_snapshot,
+            str(robot_id),
+            self.sim_time_ms,
         )
         self.__bus.publish_event('TASK:COMPLETED', proto_msg.SerializeToString())
 
     def __publish_robot_state(self, robot: Robot) -> None:
-        proto_msg = snapshot_to_proto(robot.snapshot(), self.sim_time).SerializeToString()
+        proto_msg = snapshot_to_proto(
+            robot.snapshot(),
+            self.sim_time_ms,
+        ).SerializeToString()
         self.__bus.publish_event('ROBOT_STATE', proto_msg)
 
     # ----------------------------------------------------------------------------- #
@@ -219,6 +263,8 @@ class Simulator[T]:
         assert robot.intent is not None and robot.intent.pos is not None
 
         dist = distance(robot.intent.pos, robot.pos)
+        if dist == 0.0:
+            return
         dx = robot.intent.pos[0] - robot.pos[0]
         dy = robot.intent.pos[1] - robot.pos[1]
         new_pos = (
