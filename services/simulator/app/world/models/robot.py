@@ -35,11 +35,13 @@ class RobotStateSnapshot:
 class Robot:
     pos: Position
     state: RobotState = RobotState.IDLE
-    battery: float = Field(ge=0, le=1.0, default=1.0)
+    battery: NonNegativeFloat = Field(le=1.0, default=1.0)
     id: IDType = dataclasses.field(default_factory=uuid4)
     assigned_task_id: IDType | None = None
 
     intent: RobotGoal | None = None
+    max_speed_mps: NonNegativeFloat = 1.0
+    arrive_eps_m: NonNegativeFloat = 0.05
 
     def snapshot(self) -> RobotStateSnapshot:
         """Produce an immutable snapshot for publishing."""
