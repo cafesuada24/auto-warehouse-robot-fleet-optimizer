@@ -9,6 +9,7 @@ from awrfo.contracts.schemas.robot.v1.robot_state_pb2 import (
     RobotState,
     RobotStateType,
 )
+from pydantic import NonNegativeInt
 
 from app.world.models import robot
 from app.world.models.robot import RobotStateSnapshot
@@ -20,17 +21,16 @@ _DOMAIN_TO_PROTO_MODE = MappingProxyType(
         robot.RobotState.WAITING: RobotStateType.WAITING,
         robot.RobotState.PICKING: RobotStateType.PICKING,
         robot.RobotState.DROPPING: RobotStateType.DROPPING,
-    }
+    },
 )
 
 
 def snapshot_to_proto(
     snapshot: RobotStateSnapshot,
-    ts_s: float | None = None,
+    ts_ms: NonNegativeInt,
 ) -> RobotState:
-    time_now_s = time.time()
     envelope = SchemaEnvelope(
-        ts_ms=int((ts_s or time_now_s) * 1000),
+        ts_ms=ts_ms,
         producer='simulator-service',
         envelope_version=1,
     )
