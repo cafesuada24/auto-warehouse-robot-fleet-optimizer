@@ -216,8 +216,9 @@ class Simulator[T]:
 
         assert robot.intent.pos is not None
 
-        dist = distance(robot.intent.pos, robot.pos)
-        return dist <= 0.05
+        dx = robot.intent.pos[0] - robot.pos[0]
+        dy = robot.intent.pos[1] - robot.pos[1]
+        return dx**2 + dy**2 <= robot.arrive_eps_m**2
 
     # def __perform_task_state_transition(self, robot: Robot) -> None:
     #     pass
@@ -267,9 +268,10 @@ class Simulator[T]:
             return
         dx = robot.intent.pos[0] - robot.pos[0]
         dy = robot.intent.pos[1] - robot.pos[1]
+        step = robot.max_speed_mps * dt_s
         new_pos = (
-            robot.pos[0] + dx / dist * dt_s,
-            robot.pos[1] + dy / dist * dt_s,
+            robot.pos[0] + dx / dist * step,
+            robot.pos[1] + dy / dist * step,
         )
         if (
             math.floor(new_pos[0]),
