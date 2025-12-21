@@ -13,26 +13,79 @@ from collections.abc import Generator
 from queue import Queue
 from time import monotonic, sleep
 
-from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
+from pydantic import NonNegativeFloat, PositiveInt
 
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers import task_mapper
 from app.infra.mappers.robot_state_mapper import snapshot_to_proto
 from app.types import IDType
 
-from .models.command import AssignTaskCommand, CancelTaskCommand, Command, MoveToCommand
+from .models.command import (
+    AssignTaskCommand,
+    CancelTaskCommand,
+    CommandBase,
+    MoveToCommand,
+)
 from .models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from .models.sim_clock import SimClock
-from .models.task import Task, TaskStatus
+from .models.task import Task, TaskPhase, TaskStatus
 from .models.world import World
 from .types import Position
 
 
-def StateTransitionIter(task: Task) -> Generator[tuple[RobotState, RobotGoal | None]]:
-    yield (RobotState.MOVING, RobotGoal(type=RobotGoalType.MOVE, pos=task.pickup))
-    yield (RobotState.PICKING, None)
-    yield (RobotState.MOVING, RobotGoal(type=RobotGoalType.MOVE, pos=task.dropoff))
-    yield (RobotState.DROPPING, None)
+def advance_phase(task: Task, robot: Robot) -> None:
+    """Advance the task to the next phase.
+
+    - Update the phase and the status for the Task
+    - Update the Robot's intent and state
+    """
+    if robot.assigned_task_id != task.id:
+        raise ValueError('Robot is not assigned to this task')
+
+    if task.status in (TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.FAILED):
+        raise ValueError(f'Cannot advance terminal task status: {task.status}')
+
+    if task.status != TaskStatus.EXECUTING:
+        task.status = TaskStatus.EXECUTING
+
+    if robot.task_phase is None:
+        robot.state = RobotState.MOVING
+        robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=task.pickup)
+        robot.task_phase = TaskPhase.TO_PICKUP
+        return
+
+    match robot.task_phase:
+        case TaskPhase.TO_PICKUP:
+            robot.task_phase = TaskPhase.PICKING
+
+            robot.state = RobotState.PICKING
+            robot.intent = RobotGoal(type=RobotGoalType.WAIT, wait_remaining_ms=0)
+            return
+
+        case TaskPhase.PICKING:
+            robot.task_phase = TaskPhase.TO_DROPOFF
+
+            robot.state = RobotState.MOVING
+            robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=task.dropoff)
+            return
+
+        case TaskPhase.TO_DROPOFF:
+            robot.task_phase = TaskPhase.DROPPING
+
+            robot.state = RobotState.DROPPING
+            robot.intent = RobotGoal(type=RobotGoalType.WAIT, wait_remaining_ms=0)
+            return
+
+        case TaskPhase.DROPPING:
+            robot.task_phase = None
+            task.status = TaskStatus.COMPLETED
+
+            robot.state = RobotState.IDLE
+            robot.intent = None
+            robot.assigned_task_id = None
+            return
+        case _:
+            raise ValueError(f'Unknown task phase: {robot.task_phase}')
 
 
 def distance(a: Position, b: Position) -> float:
@@ -60,17 +113,14 @@ class Simulator[T]:
 
         self.__clock = SimClock(self.__tick_ms)
 
-        self.__command_queue = Queue[Command]()
+        self.__command_queue = Queue[CommandBase]()
 
         self.__tasks: dict[IDType, Task] = {}
-        self.__state_transition_iters: dict[
-            IDType, Generator[tuple[RobotState, RobotGoal | None]]
-        ] = {}
 
         self.__stop_ev = threading.Event()
         self.__thread: threading.Thread | None = None
 
-    def register_command(self, command: Command) -> None:
+    def register_command(self, command: CommandBase) -> None:
         """Register a command to be executed."""
         self.__command_queue.put_nowait(command)
 
@@ -88,7 +138,6 @@ class Simulator[T]:
             deadline_ms=self.sim_time_ms + int(duration_s * 1000),
         )
         self.__tasks[task.id] = task
-        self.__state_transition_iters[task.id] = StateTransitionIter(task)
 
         event_to_publish = task_mapper.taskcreated_snapshot_to_proto(
             task.snapshot(),
@@ -192,20 +241,25 @@ class Simulator[T]:
             self.__tasks[task_id].status = TaskStatus.CANCELLED
             del self.__tasks[task_id]
 
-    def __execute_command(self, command: Command) -> None:
-        robot = self.__world.robots[command.robot_id]
+    def __execute_command(self, command: CommandBase) -> None:
+        robot = self.__world.robots.get(command.robot_id)
+        if robot is None:
+            return
 
-        if isinstance(command, AssignTaskCommand):
-            self.__cancel_current_task(
-                robot
-            )  # Cancel previous task if the robot is being assigned to the new task
+        match command:
+            case AssignTaskCommand():
+                self.__cancel_current_task(
+                    robot
+                )  # Cancel previous task if the robot is being assigned to the new task
 
-            robot.assigned_task_id = command.task_id
-            self.__tasks[command.task_id].status = TaskStatus.ASSIGNED
-        elif isinstance(command, CancelTaskCommand):
-            self.__cancel_current_task(robot)
-        elif isinstance(command, MoveToCommand):  # pyright: ignore
-            robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
+                robot.assigned_task_id = command.task_id
+                self.__tasks[command.task_id].status = TaskStatus.ASSIGNED
+            case CancelTaskCommand():
+                self.__cancel_current_task(robot)
+            case MoveToCommand():
+                robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
+            case _:
+                raise ValueError(f'Unsupported command type: {command!r}')
 
     def __is_intent_done(self, robot: Robot) -> bool:
         if robot.intent is None:
@@ -225,43 +279,44 @@ class Simulator[T]:
 
     def __clean_task(self, task_id: IDType) -> None:
         del self.__tasks[task_id]
-        del self.__state_transition_iters[task_id]
 
     def __execute_robot_task(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
         if robot.assigned_task_id is None and robot.intent is None:
             return
 
-        task_id = robot.assigned_task_id
-
         if self.__is_intent_done(robot):
             robot.intent = None
+
+            task_id = robot.assigned_task_id
             if task_id is None:
                 return
-            next_transition = next(self.__state_transition_iters[task_id], None)
-            if next_transition is None:
+            task = self.__tasks.get(task_id)
+            if task is None:
+                return
+
+            advance_phase(task, robot)
+
+            if task.status == TaskStatus.COMPLETED:
                 # no more task to do, reset robot state
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
 
-                self.__tasks[task_id].status = TaskStatus.COMPLETED
                 self.__publish_task_completed_event(task_id, robot.id)
                 self.__clean_task(task_id)
-                return
 
-            robot.state = next_transition[0]
-            robot.intent = next_transition[1]
             return
 
-        if robot.intent is None:
-            return
-
-        if robot.intent.pos is not None:
+        if robot.intent.type == RobotGoalType.MOVE:
             self.__move_robot(robot, dt_s)
         else:
             self.__update_wait_remaining(robot, dt_s)
 
     def __move_robot(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
-        assert robot.intent is not None and robot.intent.pos is not None
+        assert (
+            robot.intent is not None
+            and robot.intent.type == RobotGoalType.MOVE
+            and robot.intent.pos is not None
+        )
 
         dist = distance(robot.intent.pos, robot.pos)
         if dist == 0.0:
@@ -280,7 +335,13 @@ class Simulator[T]:
             robot.pos = new_pos
 
     def __update_wait_remaining(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
-        assert robot.intent is not None and robot.intent.wait_remaining_ms is not None
+        assert (
+            robot.intent is not None
+            and robot.intent.type == RobotGoalType.WAIT
+            and robot.intent.wait_remaining_ms is not None
+        )
 
-        robot.intent.wait_remaining_ms = max(0, robot.intent.wait_remaining_ms - int(dt_s * 1000))
-
+        robot.intent.wait_remaining_ms = max(
+            0,
+            robot.intent.wait_remaining_ms - int(dt_s * 1000),
+        )
