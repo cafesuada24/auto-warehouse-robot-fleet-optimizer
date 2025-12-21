@@ -20,11 +20,16 @@ from app.world.types import Position
 class TaskStatus(Enum):
     CREATED = 1
     ASSIGNED = 2
-    PICKED = 3
+    EXECUTING = 3
     COMPLETED = 4
     FAILED = 5
     CANCELLED = 6
 
+class TaskPhase(Enum):
+    TO_PICKUP = 1
+    PICKING = 2
+    TO_DROPOFF = 3
+    DROPPING = 4
 
 @dataclasses.dataclass(frozen=True)
 class TaskSnapshot:
@@ -32,19 +37,18 @@ class TaskSnapshot:
     pickup: Position
     dropoff: Position
 
-    status: TaskStatus
-
     deadline_ms: NonNegativeInt
 
+    status: TaskStatus
 
 @dataclass
 class Task:
     pickup: Position
     dropoff: Position
 
-    status: TaskStatus
-
     deadline_ms: NonNegativeInt
+
+    status: TaskStatus = TaskStatus.CREATED
 
     id: IDType = dataclasses.field(default_factory=uuid4)
 

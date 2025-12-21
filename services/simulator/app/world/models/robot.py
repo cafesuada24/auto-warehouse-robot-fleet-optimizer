@@ -7,6 +7,7 @@ from pydantic import Field, NonNegativeFloat, NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
+from app.world.models.task import TaskPhase
 from app.world.types import Position
 
 
@@ -34,7 +35,7 @@ class RobotStateSnapshot:
     state: RobotState
     battery: float
     assigned_task_id: IDType | None
-
+    task_phase: TaskPhase | None
 
 @dataclass
 class Robot:
@@ -42,9 +43,11 @@ class Robot:
     state: RobotState = RobotState.IDLE
     battery: NonNegativeFloat = Field(le=1.0, default=1.0)
     id: IDType = dataclasses.field(default_factory=uuid4)
-    assigned_task_id: IDType | None = None
 
+    assigned_task_id: IDType | None = None
+    task_phase: TaskPhase | None = None
     intent: RobotGoal | None = None
+
     max_speed_mps: NonNegativeFloat = 1.0
     arrive_eps_m: NonNegativeFloat = 0.05
 
@@ -55,5 +58,6 @@ class Robot:
             pos=self.pos,
             battery=self.battery,
             state=self.state,
+            task_phase=self.task_phase,
             assigned_task_id=self.assigned_task_id,
         )
