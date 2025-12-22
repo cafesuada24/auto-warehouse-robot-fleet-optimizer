@@ -14,6 +14,7 @@ from pydantic import NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
+from app.world.models.snapshot import Snapshot
 from app.world.types import Position
 
 
@@ -32,7 +33,7 @@ class TaskPhase(Enum):
     DROPPING = 4
 
 @dataclasses.dataclass(frozen=True)
-class TaskSnapshot:
+class TaskSnapshot(Snapshot):
     id: IDType
     pickup: Position
     dropoff: Position
@@ -52,7 +53,7 @@ class Task:
 
     id: IDType = dataclasses.field(default_factory=uuid4)
 
-    def snapshot(self) -> TaskSnapshot:
+    def snapshot(self, timestamp_ms: NonNegativeInt) -> TaskSnapshot:
         """Create a snapshot of the task."""
         return TaskSnapshot(
             id= self.id,
@@ -60,4 +61,5 @@ class Task:
             dropoff=self.dropoff,
             status=self.status,
             deadline_ms=self.deadline_ms,
+            timestamp_ms=timestamp_ms,
         )

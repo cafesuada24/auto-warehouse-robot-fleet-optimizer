@@ -9,16 +9,11 @@
 import math
 import queue
 import threading
-from collections.abc import Generator
+from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
-from pydantic import NonNegativeFloat, PositiveInt
-
-from app.infra.bus.event_bus import EventBus
-from app.infra.mappers import task_mapper
-from app.infra.mappers.robot_state_mapper import snapshot_to_proto
-from app.types import IDType
+from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from .models.command import (
     AssignTaskCommand,
@@ -30,6 +25,7 @@ from .models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from .models.sim_clock import SimClock
 from .models.task import Task, TaskPhase, TaskStatus
 from .models.world import World
+from .ports.event_publisher import EventPublisher
 from .types import Position
 
 
@@ -94,14 +90,16 @@ def distance(a: Position, b: Position) -> float:
     return math.sqrt(dx**2 + dy**2)
 
 
-class Simulator[T]:
+class Simulator:
     def __init__(
         self,
         world: World,
-        bus: EventBus[T],
+        # bus: EventBus[T],
+        event_publisher: EventPublisher,
         tick_hz: PositiveInt = 10,
     ) -> None:
-        self.__bus = bus
+        # self.__bus = bus
+        self.__event_publisher = event_publisher
 
         self.__tick_hz = tick_hz
         self.__tick_ms = 1000 // self.__tick_hz
@@ -114,8 +112,6 @@ class Simulator[T]:
         self.__clock = SimClock(self.__tick_ms)
 
         self.__command_queue = Queue[CommandBase]()
-
-        self.__tasks: dict[IDType, Task] = {}
 
         self.__stop_ev = threading.Event()
         self.__thread: threading.Thread | None = None
@@ -137,20 +133,20 @@ class Simulator[T]:
             status=TaskStatus.CREATED,
             deadline_ms=self.sim_time_ms + int(duration_s * 1000),
         )
-        self.__tasks[task.id] = task
+        self.__world.tasks[task.id] = task
 
-        event_to_publish = task_mapper.taskcreated_snapshot_to_proto(
-            task.snapshot(),
-            self.sim_time_ms,
+        self.__event_publisher.publish_task_created_event(
+            task.snapshot(self.sim_time_ms),
         )
-        self.__bus.publish_event('TASK:CREATED', event_to_publish.SerializeToString())
 
     @property
-    def sim_time_ms(self) -> int:
+    def sim_time_ms(self) -> NonNegativeInt:
+        """Return the simulation time in milliseconds."""
         return self.__clock.time_ms()
 
     @property
-    def sim_time_s(self) -> float:
+    def sim_time_s(self) -> NonNegativeFloat:
+        """Return the simulation time in seconds."""
         return self.__clock.time_s()
 
     def start(self) -> None:
@@ -186,11 +182,7 @@ class Simulator[T]:
                 if now < next_deadline:
                     sleep(next_deadline - now)
 
-                self.__clock.tick()
-
-                self.__world.time_ms = self.__clock.time_ms()
-
-                self.__tick(dt_s=self.__dt_s)
+                self.__tick()
 
                 next_deadline += tick_period_s
 
@@ -198,39 +190,33 @@ class Simulator[T]:
             print(f'Simulator crashed, stopping simulator: {e!r}')
             self.stop()
 
-    def __tick(self, dt_s: NonNegativeFloat) -> None:
-        """Move the simulator forward an amount of 'dt' time."""
-        # t_end = monotonic() + dt
+    def __drain_commands(self) -> Iterable[CommandBase]:
+        cmds: Iterable[CommandBase] = []
+
         while True:
             try:
-                cmd = self.__command_queue.get_nowait()
+                cmds.append(self.__command_queue.get_nowait())
             except queue.Empty:
                 break
+
+        return cmds
+
+    def __step(self, dt_s: NonNegativeFloat, cmds: Iterable[CommandBase]) -> None:
+        for cmd in cmds:
             self.__execute_command(cmd)
 
         for robot in self.__world.robots.values():
             self.__execute_robot_task(robot, dt_s)
-            self.__publish_robot_state(robot)
+            self.__event_publisher.publish_robot_state(robot.snapshot(self.sim_time_ms))
 
-    # --------------------------------PUBLISHING----------------------------------- #
+    def __tick(self) -> None:
+        """Move the simulator forward an amount of 'dt' time."""
+        self.__clock.tick()
+        self.__world.time_ms = self.__clock.time_ms()
 
-    def __publish_task_completed_event(self, task_id: IDType, robot_id: IDType) -> None:
-        task_snapshot = self.__tasks[task_id].snapshot()
-        proto_msg = task_mapper.taskcompleted_snapshot_to_proto(
-            task_snapshot,
-            str(robot_id),
-            self.sim_time_ms,
-        )
-        self.__bus.publish_event('TASK:COMPLETED', proto_msg.SerializeToString())
+        commands = self.__drain_commands()
 
-    def __publish_robot_state(self, robot: Robot) -> None:
-        proto_msg = snapshot_to_proto(
-            robot.snapshot(),
-            self.sim_time_ms,
-        ).SerializeToString()
-        self.__bus.publish_event('ROBOT_STATE', proto_msg)
-
-    # ----------------------------------------------------------------------------- #
+        self.__step(self.__dt_s, commands)
 
     def __cancel_current_task(self, robot: Robot) -> None:
         task_id = robot.assigned_task_id
@@ -238,8 +224,8 @@ class Simulator[T]:
         robot.intent = None
         robot.state = RobotState.IDLE
         if task_id is not None:
-            self.__tasks[task_id].status = TaskStatus.CANCELLED
-            del self.__tasks[task_id]
+            self.__world.tasks[task_id].status = TaskStatus.CANCELLED
+            # del self.__tasks[task_id]
 
     def __execute_command(self, command: CommandBase) -> None:
         robot = self.__world.robots.get(command.robot_id)
@@ -249,11 +235,11 @@ class Simulator[T]:
         match command:
             case AssignTaskCommand():
                 self.__cancel_current_task(
-                    robot
+                    robot,
                 )  # Cancel previous task if the robot is being assigned to the new task
 
                 robot.assigned_task_id = command.task_id
-                self.__tasks[command.task_id].status = TaskStatus.ASSIGNED
+                self.__world.tasks[command.task_id].status = TaskStatus.ASSIGNED
             case CancelTaskCommand():
                 self.__cancel_current_task(robot)
             case MoveToCommand():
@@ -274,12 +260,6 @@ class Simulator[T]:
         dy = robot.intent.pos[1] - robot.pos[1]
         return dx**2 + dy**2 <= robot.arrive_eps_m**2
 
-    # def __perform_task_state_transition(self, robot: Robot) -> None:
-    #     pass
-
-    def __clean_task(self, task_id: IDType) -> None:
-        del self.__tasks[task_id]
-
     def __execute_robot_task(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
         if robot.assigned_task_id is None and robot.intent is None:
             return
@@ -290,7 +270,7 @@ class Simulator[T]:
             task_id = robot.assigned_task_id
             if task_id is None:
                 return
-            task = self.__tasks.get(task_id)
+            task = self.__world.tasks.get(task_id)
             if task is None:
                 return
 
@@ -301,8 +281,9 @@ class Simulator[T]:
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
 
-                self.__publish_task_completed_event(task_id, robot.id)
-                self.__clean_task(task_id)
+                self.__event_publisher.publish_task_completed_event(
+                    task.snapshot(self.sim_time_ms),
+                )
 
             return
 

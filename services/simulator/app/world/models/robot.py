@@ -7,6 +7,7 @@ from pydantic import Field, NonNegativeFloat, NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
+from app.world.models.snapshot import Snapshot
 from app.world.models.task import TaskPhase
 from app.world.types import Position
 
@@ -29,7 +30,7 @@ class RobotGoal:
     wait_remaining_ms: NonNegativeInt | None = None
 
 @dataclasses.dataclass(frozen=True)
-class RobotStateSnapshot:
+class RobotStateSnapshot(Snapshot):
     robot_id: IDType
     pos: Position
     state: RobotState
@@ -51,7 +52,7 @@ class Robot:
     max_speed_mps: NonNegativeFloat = 1.0
     arrive_eps_m: NonNegativeFloat = 0.05
 
-    def snapshot(self) -> RobotStateSnapshot:
+    def snapshot(self, timestamp_ms: NonNegativeInt) -> RobotStateSnapshot:
         """Produce an immutable snapshot for publishing."""
         return RobotStateSnapshot(
             robot_id=self.id,
@@ -60,4 +61,5 @@ class Robot:
             state=self.state,
             task_phase=self.task_phase,
             assigned_task_id=self.assigned_task_id,
+            timestamp_ms=timestamp_ms,
         )
