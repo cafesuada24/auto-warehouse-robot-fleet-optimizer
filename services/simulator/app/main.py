@@ -7,7 +7,6 @@
 # permission, please contact the copyright holders and delete this file.
 
 import asyncio
-import threading
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any, TypedDict
@@ -16,7 +15,11 @@ from uuid import uuid4
 from fastapi import FastAPI
 
 from app.infra.bus.event_bus import EventBus
-from app.infra.bus.redis_bus import RedisBusAdapter, RedisBusMessage
+from app.infra.bus.redis_bus import (
+    RedisBusAdapter,
+    RedisBusMessage,
+    RedisEventPublisher,
+)
 from app.infra.mappers.action_command_mapper import serialized_proto_to_command
 from app.world.models.map import Map
 from app.world.models.robot import Robot
@@ -28,7 +31,7 @@ from .world.simulator import Simulator
 class Context(TypedDict, total=False):
     event_bus: EventBus[RedisBusMessage] | None
     # world: World
-    simulator: Simulator[RedisBusMessage]
+    simulator: Simulator
 
 
 context: Context = {}
@@ -74,39 +77,24 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     event_bus = RedisBusAdapter()
     context['event_bus'] = event_bus
 
-    simulator = Simulator(world=world, bus=event_bus)
+    simulator = Simulator(
+        world=world,
+        # bus=event_bus
+        event_publisher=RedisEventPublisher(event_bus),
+    )
     context['simulator'] = simulator
-
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # thread = threading.Thread(
-    #     target=loop.run_forever,
-    #     daemon=True,
-    # )
-    # thread.start()
-
-    # await asyncio.sleep(0.1)
 
     event_bus.subscribe('COMMAND', lambda msg: simulator.register_command(serialized_proto_to_command(msg['data'])))
     event_bus.start()
     simulator.start()
-    # sim_fut = asyncio.run_coroutine_threadsafe(
-    #     simulator.start(),
-    #     loop=loop,
-    # )
 
-    # _attach_command_handlers(
-    #     simulator=simulator,
-    #     event_bus=event_bus,
-    # )
     # await asyncio.sleep(2.0)
     # simulator.create_task((10, 20), (50, 10), 5)
 
-
     yield
 
-    event_bus.cleanup()
     simulator.stop()
+    event_bus.cleanup()
     # sim_fut.cancel()
 
     # loop.call_soon_threadsafe(loop.stop)

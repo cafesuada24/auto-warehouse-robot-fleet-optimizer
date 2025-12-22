@@ -5,6 +5,11 @@ from typing import Any, TypedDict
 import redis
 from redis.client import PubSubWorkerThread
 
+from app.infra.mappers import task_mapper
+from app.infra.mappers import robot_state_mapper
+from app.world.models.robot import RobotStateSnapshot
+from app.world.models.task import TaskSnapshot
+
 
 class RedisBusMessage(TypedDict):
     channel: bytes
@@ -62,3 +67,30 @@ class RedisBusAdapter:
     #     commands = []
     #     while (cmd:=self.__p.get_message()):
     #         commands.append(cmd)
+
+
+class RedisEventPublisher:
+    def __init__(self, bus: RedisBusAdapter) -> None:
+        self.__bus = bus
+
+    def publish_task_completed_event(self, snapshot: TaskSnapshot) -> None:
+        proto_msg = task_mapper.taskcompleted_snapshot_to_proto(
+            snapshot,
+            '',
+            snapshot.timestamp_ms,
+        )
+        self.__bus.publish_event('TASK:COMPLETED', proto_msg.SerializeToString())
+
+    def publish_task_created_event(self, snapshot: TaskSnapshot) -> None:
+        event_to_publish = task_mapper.taskcreated_snapshot_to_proto(
+            snapshot,
+            snapshot.timestamp_ms,
+        )
+        self.__bus.publish_event('TASK:CREATED', event_to_publish.SerializeToString())
+
+    def publish_robot_state(self, snapshot: RobotStateSnapshot) -> None:
+        proto_msg = robot_state_mapper.snapshot_to_proto(
+            snapshot,
+            snapshot.timestamp_ms,
+        ).SerializeToString()
+        self.__bus.publish_event('ROBOT_STATE', proto_msg)
