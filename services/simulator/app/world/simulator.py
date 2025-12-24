@@ -13,6 +13,8 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
+from commonlib.logging.logger import get_logger
+from commonlib.logging import logging_context
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from .models.command import (
@@ -28,6 +30,7 @@ from .models.world import World
 from .ports.event_publisher import EventPublisher
 from .types import Position
 
+logger = get_logger('simulator')
 
 def advance_phase(task: Task, robot: Robot) -> None:
     """Advance the task to the next phase.
@@ -119,6 +122,10 @@ class Simulator:
     def register_command(self, command: CommandBase) -> None:
         """Register a command to be executed."""
         self.__command_queue.put_nowait(command)
+        logger.info('New command requested', extra={
+            'id': command.id,
+            'type': command.__class__,
+        })
 
     def create_task(
         self,
@@ -138,6 +145,11 @@ class Simulator:
         self.__event_publisher.publish_task_created_event(
             task.snapshot(self.sim_time_ms),
         )
+
+        logger.info('New task published', extra={
+            'id': task.id,
+            'type': task.__class__,
+        })
 
     @property
     def sim_time_ms(self) -> NonNegativeInt:
@@ -164,6 +176,8 @@ class Simulator:
         )
         self.__thread.start()
 
+        logger.info('Simulator started')
+
     def stop(self) -> None:
         """Stop event loop."""
         self.__stop_ev.set()
@@ -171,6 +185,8 @@ class Simulator:
         if self.__thread is not None:
             self.__thread.join(timeout=2.0)
         self.__thread = None
+
+        logger.info('Simulator stopped')
 
     def __run_loop(self) -> None:
         tick_period_s = 1.0 / self.__tick_hz
@@ -187,7 +203,7 @@ class Simulator:
                 next_deadline += tick_period_s
 
         except Exception as e:
-            print(f'Simulator crashed, stopping simulator: {e!r}')
+            logger.error(f'Simulator crashed, stopping...: {e!r}')
             self.stop()
 
     def __drain_commands(self) -> Iterable[CommandBase]:
@@ -228,24 +244,37 @@ class Simulator:
             # del self.__tasks[task_id]
 
     def __execute_command(self, command: CommandBase) -> None:
+        logging_context.clear_context()
+
+        logging_context.bind_context({
+            'command_id': command.id,
+            'robot_id': command.robot_id,
+        })
+
         robot = self.__world.robots.get(command.robot_id)
         if robot is None:
             return
 
-        match command:
-            case AssignTaskCommand():
-                self.__cancel_current_task(
-                    robot,
-                )  # Cancel previous task if the robot is being assigned to the new task
+        try:
+            match command:
+                case AssignTaskCommand():
+                    self.__cancel_current_task(
+                        robot,
+                    )  # Cancel previous task if the robot is being assigned to the new task
 
-                robot.assigned_task_id = command.task_id
-                self.__world.tasks[command.task_id].status = TaskStatus.ASSIGNED
-            case CancelTaskCommand():
-                self.__cancel_current_task(robot)
-            case MoveToCommand():
-                robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
-            case _:
-                raise ValueError(f'Unsupported command type: {command!r}')
+                    robot.assigned_task_id = command.task_id
+                    self.__world.tasks[command.task_id].status = TaskStatus.ASSIGNED
+                case CancelTaskCommand():
+                    self.__cancel_current_task(robot)
+                case MoveToCommand():
+                    robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
+                case _:
+                    logger.error(f'Tried to execute unsupported command type: {command!r}')
+                    raise ValueError(f'Unsupported command type: {command!r}')
+        finally:
+            logging_context.clear_context()
+
+
 
     def __is_intent_done(self, robot: Robot) -> bool:
         if robot.intent is None:
