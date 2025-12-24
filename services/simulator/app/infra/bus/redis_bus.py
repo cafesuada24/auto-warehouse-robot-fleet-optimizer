@@ -3,12 +3,14 @@ from collections.abc import Callable
 from typing import Any, TypedDict
 
 import redis
-from redis.client import PubSubWorkerThread
+from commonlib.logging.logger import get_logger
+from redis.client import PubSub, PubSubWorkerThread
 
-from app.infra.mappers import task_mapper
-from app.infra.mappers import robot_state_mapper
+from app.infra.mappers import robot_state_mapper, task_mapper
 from app.world.models.robot import RobotStateSnapshot
 from app.world.models.task import TaskSnapshot
+
+logger = get_logger('Redis')
 
 
 class RedisBusMessage(TypedDict):
@@ -57,9 +59,12 @@ class RedisBusAdapter:
         self.__redis.close()
 
     def __thread_exception_handler(
-        self, ex, pubsub, thread: PubSubWorkerThread
+        self,
+        ex: Exception,
+        _: PubSub,
+        thread: PubSubWorkerThread,
     ) -> None:
-        print(ex, file=sys.stderr)
+        logger.error(str(ex))
         thread.stop()
         self.__thread = None
 

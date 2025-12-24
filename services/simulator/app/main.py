@@ -12,6 +12,8 @@ from contextlib import asynccontextmanager
 from typing import Any, TypedDict
 from uuid import uuid4
 
+from commonlib.logging.logger import LogConfig, setup_logging
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from app.infra.bus.event_bus import EventBus
@@ -26,6 +28,8 @@ from app.world.models.robot import Robot
 
 from .world.models.world import World
 from .world.simulator import Simulator
+
+load_dotenv()
 
 
 class Context(TypedDict, total=False):
@@ -88,8 +92,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     event_bus.start()
     simulator.start()
 
-    # await asyncio.sleep(2.0)
-    # simulator.create_task((10, 20), (50, 10), 5)
+    await asyncio.sleep(2.0)
+    simulator.create_task((10, 20), (50, 10), 5)
 
     yield
 
@@ -102,5 +106,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     # loop.close()
     context = {}
 
+
+setup_logging()
 
 app = FastAPI(lifespan=lifespan)
