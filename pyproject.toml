@@ -12,11 +12,7 @@ line-length = 88
 target-version = "py312"
 
 [tool.uv.workspace]
-members = ["services/*", "shared/generated"]
-
-[tool.uv.sources]
-awrfo-contracts = { workspace = true }
-# py-common = { workspace = true }
+members = ["shared/common/commonlib-python"]
 
 [tool.ruff.lint.per-file-ignores]
 # "**/{tests,docs,tools}/*" = ["E402"]
