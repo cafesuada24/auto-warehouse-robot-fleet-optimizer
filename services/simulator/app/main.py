@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from typing import Any, TypedDict
 from uuid import uuid4
 
-from commonlib.logging.logger import LogConfig, setup_logging
+from commonlib.logging.logger import setup_logging
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
@@ -30,6 +30,8 @@ from .world.models.world import World
 from .world.simulator import Simulator
 
 load_dotenv()
+
+setup_logging()
 
 
 class Context(TypedDict, total=False):
@@ -64,14 +66,11 @@ context: Context = {}
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Declare app lifespan."""
     global context
 
-    robots = {
-        (rid:=uuid4()): Robot((0.0, i), id=rid)
-        for i in range(2)
-    }
+    robots = {(rid := uuid4()): Robot((0.0, i), id=rid) for i in range(2)}
     world = World(
         map=Map(100, 100, set()),
         robots=robots,
@@ -88,7 +87,12 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     )
     context['simulator'] = simulator
 
-    event_bus.subscribe('COMMAND', lambda msg: simulator.register_command(serialized_proto_to_command(msg['data'])))
+    event_bus.subscribe(
+        'COMMAND',
+        lambda msg: simulator.register_command(
+            serialized_proto_to_command(msg['data']),
+        ),
+    )
     event_bus.start()
     simulator.start()
 
@@ -106,7 +110,5 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     # loop.close()
     context = {}
 
-
-setup_logging()
 
 app = FastAPI(lifespan=lifespan)
