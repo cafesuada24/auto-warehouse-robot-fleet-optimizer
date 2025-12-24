@@ -113,6 +113,8 @@ def _config_from_env() -> LogConfig:
         version=os.getenv('SERVICE_VERSION', '0.0.0'),
         log_dir=Path(log_dir) if log_dir else None,
         filename=os.getenv('FILENAME', 'app.log'),
+        rotate_bytes=int(os.getenv("LOG_ROTATE_BYTES", "52428800")),
+        backup_count=int(os.getenv("LOG_BACKUP_COUNT", "5")),
     )
 
 
@@ -219,11 +221,8 @@ def setup_logging(config: LogConfig | None = None) -> None:
     root.setLevel(level)
 
     # Replace handlers to avoid duplicate logs in reloads/tests
-    for h in root.handlers:
+    for h in root.handlers[:]:
         root.removeHandler(h)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(level)
 
     if cfg.json:
         formatter = _JsonFormatter()
@@ -233,10 +232,10 @@ def setup_logging(config: LogConfig | None = None) -> None:
             datefmt='%Y-%m-%dT%H:%M:%S%z',
         )
 
-    stdout_handler = logging.StreamHandler()
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
     stdout_handler.setLevel(level)
     stdout_handler.setFormatter(formatter)
-    root.addHandler(handler)
+    root.addHandler(stdout_handler)
 
     if cfg.log_dir is not None:
         file_hanlder = _create_file_handler(cfg, level)
