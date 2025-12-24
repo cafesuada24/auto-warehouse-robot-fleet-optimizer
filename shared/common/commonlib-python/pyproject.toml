@@ -1,5 +1,5 @@
 [project]
-name = "awrfo"
+name = "awrfo-common"
 version = "0.1.0"
 readme="README.md"
 description="Shared utilities for the AWRFO project."
