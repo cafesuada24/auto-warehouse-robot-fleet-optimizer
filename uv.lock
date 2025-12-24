@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "auto-warehouse-robot-fleet-optimizer",
-    "awrfo",
+    "awrfo-common",
 ]
 
 [[package]]
@@ -14,7 +14,7 @@ version = "0.0.1"
 source = { virtual = "." }
 
 [[package]]
-name = "awrfo"
+name = "awrfo-common"
 version = "0.1.0"
 source = { editable = "shared/common/commonlib-python" }
 
