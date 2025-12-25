@@ -1,28 +1,23 @@
 [project]
 name = "awrfo-python"
 version = "0.1.0"
-readme="README.md"
-description="Shared utilities for the AWRFO project."
+readme = "README.md"
+description = "Shared utilities for the AWRFO project."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["protobuf"]
 
 [build-system]
 requires = ["uv_build>=0.9.17,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = ["awrfo"]
+module-name = ["awrfo", "buf"]
 module-root = "src"
 
 [tool.pytest]
 minversion = "9.0"
 addopts = ['-ra', '-q']
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 
 [dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-asyncio>=1.3.0",
-]
+dev = ["pytest>=9.0.2", "pytest-asyncio>=1.3.0"]
