@@ -2,7 +2,7 @@
 from pydantic import PositiveInt
 from pydantic.dataclasses import dataclass
 
-from app.world.types import Coordinate
+from app.domain.types import Coordinate
 
 
 @dataclass

@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from app.world.models.robot import RobotStateSnapshot
-from app.world.models.task import TaskSnapshot
+from app.domain.models.robot import RobotStateSnapshot
+from app.domain.models.task import TaskSnapshot
 
 
 class EventPublisher(Protocol):

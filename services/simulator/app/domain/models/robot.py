@@ -3,13 +3,14 @@ import dataclasses
 from enum import Enum
 from uuid import uuid4
 
+from commonlib.types import IDType
 from pydantic import Field, NonNegativeFloat, NonNegativeInt
 from pydantic.dataclasses import dataclass
 
-from app.types import IDType
-from app.world.models.snapshot import Snapshot
-from app.world.models.task import TaskPhase
-from app.world.types import Position
+from app.domain.types import Position
+
+from .snapshot import Snapshot
+from .task import TaskPhase
 
 
 class RobotState(Enum):
