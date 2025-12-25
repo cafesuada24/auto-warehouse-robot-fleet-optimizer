@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from commonlib.logging.logger import LogConfig, get_logger, setup_logging
-from commonlib.logging.logging_context import (
+from awrfo.logging.logger import LogConfig, get_logger, setup_logging
+from awrfo.logging.logging_context import (
     bind_context,
     clear_context,
     context_scope,

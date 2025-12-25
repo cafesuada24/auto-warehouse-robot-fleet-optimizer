@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import pytest
-from commonlib.logging.logger import LogConfig, get_logger, setup_logging
+from awrfo.logging.logger import LogConfig, get_logger, setup_logging
 
 
 def _flush_logging() -> None:

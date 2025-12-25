@@ -1,5 +1,5 @@
 [project]
-name = "awrfo-common"
+name = "awrfo-python"
 version = "0.1.0"
 readme="README.md"
 description="Shared utilities for the AWRFO project."
@@ -11,7 +11,7 @@ requires = ["uv_build>=0.9.17,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = ["commonlib"]
+module-name = ["awrfo"]
 module-root = "src"
 
 [tool.pytest]
