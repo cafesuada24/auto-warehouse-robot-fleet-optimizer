@@ -16,16 +16,16 @@ from awrfo.logging.logger import setup_logging
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from app.application.simulator import Simulator
 from app.domain.models.map import Map
 from app.domain.models.robot import Robot
 from app.domain.models.world import World
-from app.domain.simulator import Simulator
 from app.infra.bus.event_bus import EventBus
 from app.infra.bus.redis_bus import (
     RedisBusAdapter,
     RedisBusMessage,
-    RedisEventPublisher,
 )
+from app.infra.event_publisher import EventPublisher
 from app.infra.mappers.action_command_mapper import serialized_proto_to_command
 
 load_dotenv()
@@ -65,7 +65,7 @@ context: Context = {}
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     """Declare app lifespan."""
     global context
 
@@ -79,10 +79,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     event_bus = RedisBusAdapter()
     context['event_bus'] = event_bus
 
+    event_publisher = EventPublisher(bus=event_bus)
     simulator = Simulator(
         world=world,
         # bus=event_bus
-        event_publisher=RedisEventPublisher(event_bus),
+        event_publisher=event_publisher,
     )
     context['simulator'] = simulator
 
@@ -93,6 +94,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         ),
     )
     event_bus.start()
+    event_publisher.start()
     simulator.start()
 
     await asyncio.sleep(2.0)
@@ -101,6 +103,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     yield
 
     simulator.stop()
+    event_publisher.stop()
     event_bus.cleanup()
     # sim_fut.cancel()
 
