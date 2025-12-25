@@ -10,6 +10,6 @@ managed:
 
 plugins:
   - remote: buf.build/protocolbuffers/python:v33.2
-    out: ../generated/awrfo-python/src
+    out: ../library/awrfo-python/src
   - remote: buf.build/protocolbuffers/pyi:v33.2
-    out: ../generated/awrfo-python/src
+    out: ../library/awrfo-python/src
