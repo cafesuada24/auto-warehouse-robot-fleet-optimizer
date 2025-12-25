@@ -5,55 +5,50 @@ from awrfo.contracts.envelopes.event_envelope.v1.event_envelope_pb2 import Event
 from awrfo.contracts.events.task.v1.task_completed_pb2 import TaskCompletedEvent
 from awrfo.contracts.events.task.v1.task_created_pb2 import TaskCreatedEvent
 from awrfo.contracts.schemas.common.v1.coordinate_pb2 import Coordinate
-from pydantic import NonNegativeInt
 
-from app.domain.models.task import TaskSnapshot
+from app.domain.models import task
+from app.infra.mappers.mappers import convert_to_proto
 
 
-def taskcreated_snapshot_to_proto(
-    snapshot: TaskSnapshot,
-    ts_ms: NonNegativeInt,
-) -> TaskCreatedEvent:
+@convert_to_proto.register
+def taskcreated_event_to_proto(event: task.TaskCreatedEvent) -> TaskCreatedEvent:
     envelope = EventEnvelope(
         event_id=str(uuid4()),
         event_type='task.created.v1',
-        ts_ms=ts_ms,
+        ts_ms=event.timestamp_ms,
         producer='simulator-service',
         envelope_version=1,
     )
 
     return TaskCreatedEvent(
         envelope=envelope,
-        task_id=str(snapshot.id),
+        task_id=str(event.id),
         pickup=Coordinate(
-            x=snapshot.pickup[0],
-            y=snapshot.pickup[1],
+            x=event.pickup[0],
+            y=event.pickup[1],
         ),
         dropoff=Coordinate(
-            x=snapshot.dropoff[0],
-            y=snapshot.dropoff[1],
+            x=event.dropoff[0],
+            y=event.dropoff[1],
         ),
-        deadline_ms=snapshot.deadline_ms,
+        deadline_ms=event.deadline_ms,
     )
 
 
-def taskcompleted_snapshot_to_proto(
-    snapshot: TaskSnapshot,
-    robot_id: str,
-    ts_ms: NonNegativeInt,
-) -> TaskCompletedEvent:
+@convert_to_proto.register
+def taskcompleted_event_to_proto(event: task.TaskCompletedEvent) -> TaskCompletedEvent:
     envelope = EventEnvelope(
         event_id=str(uuid4()),
         event_type='task.completed.v1',
-        ts_ms=ts_ms,
+        ts_ms=event.timestamp_ms,
         producer='simulator-service',
         envelope_version=1,
     )
 
     return TaskCompletedEvent(
         envelope=envelope,
-        task_id=str(snapshot.id),
-        robot_id=robot_id,
-        duration_s=timedelta(0.0),
+        task_id=str(event.id),
+        robot_id='',
+        duration_s=timedelta(event.duration_ms / 1000.0),
         battery_used=0.0,
     )
