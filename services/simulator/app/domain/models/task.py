@@ -34,14 +34,20 @@ class TaskPhase(Enum):
     DROPPING = 4
 
 @dataclasses.dataclass(frozen=True)
-class TaskSnapshot(Snapshot):
-    id: IDType
+class TaskEventBase(Snapshot):
+    pass
+
+
+@dataclasses.dataclass(frozen=True)
+class TaskCreatedEvent(TaskEventBase):
     pickup: Position
     dropoff: Position
 
     deadline_ms: NonNegativeInt
 
-    status: TaskStatus
+@dataclasses.dataclass(frozen=True)
+class TaskCompletedEvent(TaskEventBase):
+    duration_ms: NonNegativeInt
 
 @dataclass
 class Task:
@@ -54,13 +60,13 @@ class Task:
 
     id: IDType = dataclasses.field(default_factory=uuid4)
 
-    def snapshot(self, timestamp_ms: NonNegativeInt) -> TaskSnapshot:
-        """Create a snapshot of the task."""
-        return TaskSnapshot(
-            id= self.id,
-            pickup=self.pickup,
-            dropoff=self.dropoff,
-            status=self.status,
-            deadline_ms=self.deadline_ms,
-            timestamp_ms=timestamp_ms,
-        )
+    # def snapshot(self, timestamp_ms: NonNegativeInt) -> TaskSnapshot:
+    #     """Create a snapshot of the task."""
+    #     return TaskSnapshot(
+    #         id= self.id,
+    #         pickup=self.pickup,
+    #         dropoff=self.dropoff,
+    #         status=self.status,
+    #         deadline_ms=self.deadline_ms,
+    #         timestamp_ms=timestamp_ms,
+    #     )

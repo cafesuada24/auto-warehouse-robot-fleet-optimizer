@@ -1,4 +1,3 @@
-
 import dataclasses
 from enum import Enum
 from uuid import uuid4
@@ -32,7 +31,6 @@ class RobotGoal:
 
 @dataclasses.dataclass(frozen=True)
 class RobotStateSnapshot(Snapshot):
-    robot_id: IDType
     pos: Position
     state: RobotState
     battery: float
@@ -56,7 +54,7 @@ class Robot:
     def snapshot(self, timestamp_ms: NonNegativeInt) -> RobotStateSnapshot:
         """Produce an immutable snapshot for publishing."""
         return RobotStateSnapshot(
-            robot_id=self.id,
+            id=self.id,
             pos=self.pos,
             battery=self.battery,
             state=self.state,
