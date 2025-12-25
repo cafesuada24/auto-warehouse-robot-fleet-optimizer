@@ -7,7 +7,7 @@ from awrfo.contracts.events.task.v1.task_created_pb2 import TaskCreatedEvent
 from awrfo.contracts.schemas.common.v1.coordinate_pb2 import Coordinate
 from pydantic import NonNegativeInt
 
-from app.world.models.task import TaskSnapshot
+from app.domain.models.task import TaskSnapshot
 
 
 def taskcreated_snapshot_to_proto(

@@ -1,4 +1,3 @@
-import time
 from types import MappingProxyType
 
 from awrfo.contracts.envelopes.schema_envelope.v1.schema_envelope_pb2 import (
@@ -11,8 +10,8 @@ from awrfo.contracts.schemas.robot.v1.robot_state_pb2 import (
 )
 from pydantic import NonNegativeInt
 
-from app.world.models import robot
-from app.world.models.robot import RobotStateSnapshot
+from app.domain.models import robot
+from app.domain.models.robot import RobotStateSnapshot
 
 _DOMAIN_TO_PROTO_MODE = MappingProxyType(
     {

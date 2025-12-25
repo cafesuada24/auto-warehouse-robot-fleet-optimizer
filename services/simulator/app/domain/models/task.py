@@ -14,8 +14,8 @@ from pydantic import NonNegativeInt
 from pydantic.dataclasses import dataclass
 
 from app.types import IDType
-from app.world.models.snapshot import Snapshot
-from app.world.types import Position
+from .snapshot import Snapshot
+from app.domain.types import Position
 
 
 class TaskStatus(Enum):

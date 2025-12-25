@@ -16,6 +16,10 @@ from commonlib.logging.logger import setup_logging
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from app.domain.models.map import Map
+from app.domain.models.robot import Robot
+from app.domain.models.world import World
+from app.domain.simulator import Simulator
 from app.infra.bus.event_bus import EventBus
 from app.infra.bus.redis_bus import (
     RedisBusAdapter,
@@ -23,11 +27,6 @@ from app.infra.bus.redis_bus import (
     RedisEventPublisher,
 )
 from app.infra.mappers.action_command_mapper import serialized_proto_to_command
-from app.world.models.map import Map
-from app.world.models.robot import Robot
-
-from .world.models.world import World
-from .world.simulator import Simulator
 
 load_dotenv()
 

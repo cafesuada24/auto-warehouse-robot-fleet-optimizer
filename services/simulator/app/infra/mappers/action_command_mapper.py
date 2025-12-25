@@ -8,13 +8,13 @@
 
 from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand, CommandType
 
-from app.types import IDType
-from app.world.models.command import (
+from app.domain.models.command import (
     AssignTaskCommand,
     CancelTaskCommand,
     CommandBase,
     MoveToCommand,
 )
+from app.types import IDType
 
 
 def proto_to_command(action_command: ActionCommand) -> CommandBase:

@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
 
 from pydantic import NonNegativeInt
 
+from app.domain.types import Position
 from app.types import IDType
-from app.world.types import Position
 
 
 @dataclass(frozen=True)
