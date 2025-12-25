@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from typing import Any, TypedDict
 from uuid import uuid4
 
-from commonlib.logging.logger import setup_logging
+from awrfo.logging.logger import setup_logging
 from dotenv import load_dotenv
 from fastapi import FastAPI
 

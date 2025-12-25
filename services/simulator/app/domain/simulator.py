@@ -13,8 +13,8 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
-from commonlib.logging.logger import get_logger
-from commonlib.logging import logging_context
+from awrfo.logging.logger import get_logger
+from awrfo.logging import logging_context
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from .models.command import (

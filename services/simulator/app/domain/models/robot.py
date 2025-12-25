@@ -3,7 +3,7 @@ import dataclasses
 from enum import Enum
 from uuid import uuid4
 
-from commonlib.types import IDType
+from awrfo.types import IDType
 from pydantic import Field, NonNegativeFloat, NonNegativeInt
 from pydantic.dataclasses import dataclass
 

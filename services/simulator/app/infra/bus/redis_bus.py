@@ -1,14 +1,13 @@
-import sys
 from collections.abc import Callable
 from typing import Any, TypedDict
 
 import redis
-from commonlib.logging.logger import get_logger
+from awrfo.logging.logger import get_logger
 from redis.client import PubSub, PubSubWorkerThread
 
-from app.infra.mappers import robot_state_mapper, task_mapper
 from app.domain.models.robot import RobotStateSnapshot
 from app.domain.models.task import TaskSnapshot
+from app.infra.mappers import robot_state_mapper, task_mapper
 
 logger = get_logger('Redis')
 
