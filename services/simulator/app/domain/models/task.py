@@ -13,9 +13,10 @@ from uuid import uuid4
 from pydantic import NonNegativeInt
 from pydantic.dataclasses import dataclass
 
-from app.types import IDType
-from .snapshot import Snapshot
 from app.domain.types import Position
+from app.types import IDType
+
+from .snapshot import Snapshot
 
 
 class TaskStatus(Enum):
