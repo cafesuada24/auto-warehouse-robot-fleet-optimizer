@@ -43,12 +43,12 @@ class EventPublisher[T]:
 
     def enqueue_all(self, items: Iterable[PublishRequest]) -> None:
         for item in items:
-            if item.policy == PublishPolicy.BEST_EFFORT:
+            if item.policy is PublishPolicy.BEST_EFFORT:
                 try:
                     self.__q.put_nowait(item)
                 except queue.Full:
                     continue
-            elif item.policy == PublishPolicy.RELIABLE:
+            elif item.policy is PublishPolicy.RELIABLE:
                 self.__q.put(item)
 
     def __run(self) -> None:
@@ -60,10 +60,13 @@ class EventPublisher[T]:
 
             try:
                 proto_type = convert_to_proto(item.payload)
+                serialized: bytes = proto_type.SerializeToString()
+
+                self.__bus.publish_event(item.topic, serialized)
             except NotImplementedError as e:
                 _logger.warning(e)
-                continue
+                if item.policy is PublishPolicy.RELIABLE:
+                    raise
+            finally:
+                self.__q.task_done()
 
-            serialized: bytes = proto_type.SerializeToString()
-
-            self.__bus.publish_event(item.topic, serialized)
