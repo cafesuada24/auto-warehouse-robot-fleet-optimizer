@@ -13,24 +13,32 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
-from awrfo.logging.logger import get_logger
-from awrfo.logging import logging_context
-from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
-
-from .models.command import (
+from app.application.dtos.publish_request import PublishPolicy, PublishRequest
+from app.domain.models.command import (
     AssignTaskCommand,
     CancelTaskCommand,
     CommandBase,
     MoveToCommand,
 )
-from .models.robot import Robot, RobotGoal, RobotGoalType, RobotState
-from .models.sim_clock import SimClock
-from .models.task import Task, TaskPhase, TaskStatus
-from .models.world import World
-from .ports.event_publisher import EventPublisher
-from .types import Position
+from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
+from app.domain.models.sim_clock import SimClock
+from app.domain.models.task import (
+    Task,
+    TaskCompletedEvent,
+    TaskCreatedEvent,
+    TaskPhase,
+    TaskStatus,
+)
+from app.domain.models.world import World
+from app.domain.types import Position
+from awrfo.logging import logging_context
+from awrfo.logging.logger import get_logger
+from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
+
+from .interfaces.ports.event_publisher import EventPublisher
 
 logger = get_logger('simulator')
+
 
 def advance_phase(task: Task, robot: Robot) -> None:
     """Advance the task to the next phase.
@@ -122,10 +130,13 @@ class Simulator:
     def register_command(self, command: CommandBase) -> None:
         """Register a command to be executed."""
         self.__command_queue.put_nowait(command)
-        logger.info('New command requested', extra={
-            'id': command.id,
-            'type': command.__class__,
-        })
+        logger.info(
+            'New command requested',
+            extra={
+                'id': command.id,
+                'type': command.__class__,
+            },
+        )
 
     def create_task(
         self,
@@ -134,22 +145,41 @@ class Simulator:
         duration_s: float,
     ) -> None:
         """Create an unassigned pickup/dropoff task."""
+        now = self.sim_time_ms
         task = Task(
             pickup=pickup,
             dropoff=dropoff,
             status=TaskStatus.CREATED,
-            deadline_ms=self.sim_time_ms + int(duration_s * 1000),
+            deadline_ms=now + int(duration_s * 1000),
         )
         self.__world.tasks[task.id] = task
 
-        self.__event_publisher.publish_task_created_event(
-            task.snapshot(self.sim_time_ms),
+        event = TaskCreatedEvent(
+            id=task.id,
+            timestamp_ms=now,
+            pickup=task.pickup,
+            dropoff=task.dropoff,
+            deadline_ms=task.deadline_ms,
         )
 
-        logger.info('New task published', extra={
-            'id': task.id,
-            'type': task.__class__,
-        })
+        self.__event_publisher.enqueue_all(
+            [
+                PublishRequest(
+                    topic='TASK:CREATED',
+                    payload=event,
+                    time_ms=now,
+                    policy=PublishPolicy.RELIABLE,
+                ),
+            ]
+        )
+
+        logger.info(
+            'New task published',
+            extra={
+                'id': task.id,
+                'type': task.__class__,
+            },
+        )
 
     @property
     def sim_time_ms(self) -> NonNegativeInt:
@@ -217,13 +247,29 @@ class Simulator:
 
         return cmds
 
-    def __step(self, dt_s: NonNegativeFloat, cmds: Iterable[CommandBase]) -> None:
+    def __step(
+        self,
+        dt_s: NonNegativeFloat,
+        cmds: Iterable[CommandBase],
+    ) -> Iterable[PublishRequest]:
         for cmd in cmds:
             self.__execute_command(cmd)
 
-        for robot in self.__world.robots.values():
+        robots = self.__world.robots.values()
+        for robot in robots:
             self.__execute_robot_task(robot, dt_s)
-            self.__event_publisher.publish_robot_state(robot.snapshot(self.sim_time_ms))
+
+        now = self.sim_time_ms
+
+        return [
+            PublishRequest(
+                topic='ROBOT_STATE',
+                payload=robot.snapshot(now),
+                time_ms=now,
+                policy=PublishPolicy.BEST_EFFORT,
+            )
+            for robot in robots
+        ]
 
     def __tick(self) -> None:
         """Move the simulator forward an amount of 'dt' time."""
@@ -232,7 +278,8 @@ class Simulator:
 
         commands = self.__drain_commands()
 
-        self.__step(self.__dt_s, commands)
+        events = self.__step(self.__dt_s, commands)
+        self.__event_publisher.enqueue_all(events)
 
     def __cancel_current_task(self, robot: Robot) -> None:
         task_id = robot.assigned_task_id
@@ -246,10 +293,12 @@ class Simulator:
     def __execute_command(self, command: CommandBase) -> None:
         logging_context.clear_context()
 
-        logging_context.bind_context({
-            'command_id': command.id,
-            'robot_id': command.robot_id,
-        })
+        logging_context.bind_context(
+            {
+                'command_id': command.id,
+                'robot_id': command.robot_id,
+            }
+        )
 
         robot = self.__world.robots.get(command.robot_id)
         if robot is None:
@@ -269,12 +318,12 @@ class Simulator:
                 case MoveToCommand():
                     robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
                 case _:
-                    logger.error(f'Tried to execute unsupported command type: {command!r}')
+                    logger.error(
+                        f'Tried to execute unsupported command type: {command!r}'
+                    )
                     raise ValueError(f'Unsupported command type: {command!r}')
         finally:
             logging_context.clear_context()
-
-
 
     def __is_intent_done(self, robot: Robot) -> bool:
         if robot.intent is None:
@@ -310,8 +359,22 @@ class Simulator:
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
 
-                self.__event_publisher.publish_task_completed_event(
-                    task.snapshot(self.sim_time_ms),
+                now = self.sim_time_ms
+
+                event = TaskCompletedEvent(
+                    id=task.id,
+                    timestamp_ms=now,
+                    duration_ms=0,
+                )
+                self.__event_publisher.enqueue_all(
+                    [
+                        PublishRequest(
+                            topic='TASK:COMPLETED',
+                            payload=event,
+                            time_ms=now,
+                            policy=PublishPolicy.RELIABLE,
+                        ),
+                    ],
                 )
 
             return
