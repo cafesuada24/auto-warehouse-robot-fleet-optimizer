@@ -33,11 +33,13 @@ from app.domain.models.world import World
 from app.domain.types import Position
 from awrfo.logging import logging_context
 from awrfo.logging.logger import get_logger
+from awrfo.ttl_cache import TTLCache
+from awrfo.types import IDType
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from .interfaces.ports.event_publisher import EventPublisher
 
-logger = get_logger('simulator')
+_logger = get_logger('simulator')
 
 
 def advance_phase(task: Task, robot: Robot) -> None:
@@ -127,16 +129,20 @@ class Simulator:
         self.__stop_ev = threading.Event()
         self.__thread: threading.Thread | None = None
 
+        self.__cmd_ttl_cache = TTLCache[IDType](use_wall_timer=False)
+
     def register_command(self, command: CommandBase) -> None:
         """Register a command to be executed."""
+        logging_context.clear_context()
+
+        _logger.info('New command requested')
+        if not self.__cmd_ttl_cache.try_add(value=command.id, ts_ms=self.sim_time_ms):
+            _logger.warning('Duplicated command detected, discarding...')
+            return
+        _logger.info('Command queued to be executed')
         self.__command_queue.put_nowait(command)
-        logger.info(
-            'New command requested',
-            extra={
-                'id': command.id,
-                'type': command.__class__,
-            },
-        )
+
+        logging_context.clear_context()
 
     def create_task(
         self,
@@ -170,10 +176,10 @@ class Simulator:
                     time_ms=now,
                     policy=PublishPolicy.RELIABLE,
                 ),
-            ]
+            ],
         )
 
-        logger.info(
+        _logger.info(
             'New task published',
             extra={
                 'id': task.id,
@@ -206,7 +212,7 @@ class Simulator:
         )
         self.__thread.start()
 
-        logger.info('Simulator started')
+        _logger.info('Simulator started')
 
     def stop(self) -> None:
         """Stop event loop."""
@@ -216,7 +222,7 @@ class Simulator:
             self.__thread.join(timeout=2.0)
         self.__thread = None
 
-        logger.info('Simulator stopped')
+        _logger.info('Simulator stopped')
 
     def __run_loop(self) -> None:
         tick_period_s = 1.0 / self.__tick_hz
@@ -233,7 +239,7 @@ class Simulator:
                 next_deadline += tick_period_s
 
         except Exception as e:
-            logger.error(f'Simulator crashed, stopping...: {e!r}')
+            _logger.error(f'Simulator crashed, stopping...: {e!r}')
             self.stop()
 
     def __drain_commands(self) -> Iterable[CommandBase]:
@@ -318,7 +324,7 @@ class Simulator:
                 case MoveToCommand():
                     robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
                 case _:
-                    logger.error(
+                    _logger.error(
                         f'Tried to execute unsupported command type: {command!r}'
                     )
                     raise ValueError(f'Unsupported command type: {command!r}')
