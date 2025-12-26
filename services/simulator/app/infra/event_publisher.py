@@ -4,7 +4,8 @@ from collections.abc import Iterable
 
 from awrfo.logging.logger import get_logger
 
-from app.application.dtos.publish_request import PublishPolicy, PublishRequest
+from app.application.dtos.publish_request import PublishRequest
+from app.application.dtos.qos_policy import QoSPolicy
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers.mappers import convert_to_proto
 
@@ -43,12 +44,12 @@ class EventPublisher[T]:
 
     def enqueue_all(self, items: Iterable[PublishRequest]) -> None:
         for item in items:
-            if item.policy is PublishPolicy.BEST_EFFORT:
+            if item.policy is QoSPolicy.BEST_EFFORT:
                 try:
                     self.__q.put_nowait(item)
                 except queue.Full:
                     continue
-            elif item.policy is PublishPolicy.RELIABLE:
+            elif item.policy is QoSPolicy.RELIABLE:
                 self.__q.put(item)
 
     def __run(self) -> None:
@@ -65,7 +66,7 @@ class EventPublisher[T]:
                 self.__bus.publish_event(item.topic, serialized)
             except NotImplementedError as e:
                 _logger.warning(e)
-                if item.policy is PublishPolicy.RELIABLE:
+                if item.policy is QoSPolicy.RELIABLE:
                     raise
             finally:
                 self.__q.task_done()

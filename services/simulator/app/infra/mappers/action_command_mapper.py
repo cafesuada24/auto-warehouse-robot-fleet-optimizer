@@ -6,8 +6,16 @@
 # permission of the copyright holders.  If you encounter this file and do not have
 # permission, please contact the copyright holders and delete this file.
 
-from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand, CommandType
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Final
 
+from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand
+from awrfo.contracts.commands.v1.command_policy_pb2 import CommandPolicy
+from awrfo.contracts.commands.v1.command_type_pb2 import CommandType
+
+from app.application.dtos.qos_policy import QoSPolicy
+from app.domain.models import command
 from app.domain.models.command import (
     AssignTaskCommand,
     CancelTaskCommand,
@@ -15,6 +23,15 @@ from app.domain.models.command import (
     MoveToCommand,
 )
 from app.types import IDType
+
+_POLICY_MAPPING: Final[Mapping[CommandPolicy, command.CommandPolicy]] = (
+    MappingProxyType(
+        {
+            CommandPolicy.COMMAND_POLICY_MUST: command.CommandPolicy.MUST,
+            CommandPolicy.COMMAND_POLICY_BEST_EFFORT: command.CommandPolicy.BEST_EFFORT,
+        },
+    )
+)
 
 
 def proto_to_command(action_command: ActionCommand) -> CommandBase:
@@ -29,6 +46,7 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             task_id=IDType(action_command.assign_task.task_id),
             robot_id=IDType(action_command.robot_id),
             issued_at_ms=0,
+            policy=_POLICY_MAPPING[action_command.policy],
         )
 
     if action_command.type == CommandType.COMMAND_TYPE_MOVE_TO:
@@ -45,6 +63,7 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             if action_command.move_to.HasField('arrive_eps')
             else 0.1,
             issued_at_ms=0,
+            policy=_POLICY_MAPPING[action_command.policy],
         )
 
     if action_command.type == CommandType.COMMAND_TYPE_CANCEL_TASK:
@@ -58,8 +77,8 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             robot_id=IDType(action_command.robot_id),
             task_id=IDType(action_command.cancel_task.task_id),
             issued_at_ms=0,
+            policy=_POLICY_MAPPING[action_command.policy],
         )
-
 
     raise ValueError(f'Unsupported ActionCommand payload: {action_command}')
 
