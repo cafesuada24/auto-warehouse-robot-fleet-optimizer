@@ -19,12 +19,11 @@ from app.application.commands.policy import CommandPolicy
 from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
 from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
+from app.domain.events.task_events import TaskCompletedEvent, TaskCreatedEvent
 from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from app.domain.models.sim_clock import SimClock
 from app.domain.models.task import (
     Task,
-    TaskCompletedEvent,
-    TaskCreatedEvent,
     TaskPhase,
     TaskStatus,
 )
@@ -188,7 +187,7 @@ class Simulator:
         self.__world.tasks[task.id] = task
 
         event = TaskCreatedEvent(
-            id=task.id,
+            task_id=task.id,
             timestamp_ms=now,
             pickup=task.pickup,
             dropoff=task.dropoff,
@@ -411,7 +410,7 @@ class Simulator:
                 now = self.__world.time_ms
 
                 return TaskCompletedEvent(
-                    id=task.id,
+                    task_id=task.id,
                     timestamp_ms=now,
                     duration_ms=0,
                 )

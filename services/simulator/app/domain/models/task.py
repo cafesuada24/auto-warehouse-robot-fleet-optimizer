@@ -16,7 +16,6 @@ from pydantic.dataclasses import dataclass
 from app.domain.types import Position
 from app.types import IDType
 
-from .snapshot import Snapshot
 
 
 class TaskStatus(Enum):
@@ -32,22 +31,6 @@ class TaskPhase(Enum):
     PICKING = 2
     TO_DROPOFF = 3
     DROPPING = 4
-
-@dataclasses.dataclass(frozen=True)
-class TaskEventBase(Snapshot):
-    pass
-
-
-@dataclasses.dataclass(frozen=True)
-class TaskCreatedEvent(TaskEventBase):
-    pickup: Position
-    dropoff: Position
-
-    deadline_ms: NonNegativeInt
-
-@dataclasses.dataclass(frozen=True)
-class TaskCompletedEvent(TaskEventBase):
-    duration_ms: NonNegativeInt
 
 @dataclass
 class Task:
