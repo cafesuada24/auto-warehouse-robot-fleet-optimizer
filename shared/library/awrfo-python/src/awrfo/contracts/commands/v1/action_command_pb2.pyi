@@ -1,7 +1,8 @@
 from buf.validate import validate_pb2 as _validate_pb2
 from google.protobuf import duration_pb2 as _duration_pb2
 from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as _coordinate_pb2
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+from awrfo.contracts.commands.v1 import command_type_pb2 as _command_type_pb2
+from awrfo.contracts.commands.v1 import command_policy_pb2 as _command_policy_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from collections.abc import Mapping as _Mapping
@@ -9,25 +10,13 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class CommandType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
-    COMMAND_TYPE_UNSPECIFIED: _ClassVar[CommandType]
-    COMMAND_TYPE_ASSIGN_TASK: _ClassVar[CommandType]
-    COMMAND_TYPE_CANCEL_TASK: _ClassVar[CommandType]
-    COMMAND_TYPE_MOVE_TO: _ClassVar[CommandType]
-    COMMAND_TYPE_WAIT: _ClassVar[CommandType]
-COMMAND_TYPE_UNSPECIFIED: CommandType
-COMMAND_TYPE_ASSIGN_TASK: CommandType
-COMMAND_TYPE_CANCEL_TASK: CommandType
-COMMAND_TYPE_MOVE_TO: CommandType
-COMMAND_TYPE_WAIT: CommandType
-
 class ActionCommand(_message.Message):
     __slots__ = ()
     ID_FIELD_NUMBER: _ClassVar[int]
     TS_MS_FIELD_NUMBER: _ClassVar[int]
     ROBOT_ID_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
+    POLICY_FIELD_NUMBER: _ClassVar[int]
     ASSIGN_TASK_FIELD_NUMBER: _ClassVar[int]
     CANCEL_TASK_FIELD_NUMBER: _ClassVar[int]
     MOVE_TO_FIELD_NUMBER: _ClassVar[int]
@@ -35,12 +24,13 @@ class ActionCommand(_message.Message):
     id: str
     ts_ms: int
     robot_id: str
-    type: CommandType
+    type: _command_type_pb2.CommandType
+    policy: _command_policy_pb2.CommandPolicy
     assign_task: AssignTask
     cancel_task: CancelTask
     move_to: MoveTo
     wait: Wait
-    def __init__(self, id: _Optional[str] = ..., ts_ms: _Optional[int] = ..., robot_id: _Optional[str] = ..., type: _Optional[_Union[CommandType, str]] = ..., assign_task: _Optional[_Union[AssignTask, _Mapping]] = ..., cancel_task: _Optional[_Union[CancelTask, _Mapping]] = ..., move_to: _Optional[_Union[MoveTo, _Mapping]] = ..., wait: _Optional[_Union[Wait, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., ts_ms: _Optional[int] = ..., robot_id: _Optional[str] = ..., type: _Optional[_Union[_command_type_pb2.CommandType, str]] = ..., policy: _Optional[_Union[_command_policy_pb2.CommandPolicy, str]] = ..., assign_task: _Optional[_Union[AssignTask, _Mapping]] = ..., cancel_task: _Optional[_Union[CancelTask, _Mapping]] = ..., move_to: _Optional[_Union[MoveTo, _Mapping]] = ..., wait: _Optional[_Union[Wait, _Mapping]] = ...) -> None: ...
 
 class AssignTask(_message.Message):
     __slots__ = ()
