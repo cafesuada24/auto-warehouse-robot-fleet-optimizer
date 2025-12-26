@@ -411,6 +411,7 @@ class Simulator:
 
                 return TaskCompletedEvent(
                     task_id=task.id,
+                    robot_id=robot.id,
                     timestamp_ms=now,
                     duration_ms=0,
                 )
