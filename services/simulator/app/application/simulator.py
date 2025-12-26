@@ -33,6 +33,7 @@ from app.domain.models.world import World
 from app.domain.types import Position
 from awrfo.logging import logging_context
 from awrfo.logging.logger import get_logger
+from awrfo.mathx import distance
 from awrfo.ttl_cache import TTLCache
 from awrfo.types import IDType
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
@@ -95,12 +96,6 @@ def advance_phase(task: Task, robot: Robot) -> None:
             return
         case _:
             raise ValueError(f'Unknown task phase: {robot.task_phase}')
-
-
-def distance(a: Position, b: Position) -> float:
-    dx = b[0] - a[0]
-    dy = b[1] - a[1]
-    return math.sqrt(dx**2 + dy**2)
 
 
 class Simulator:
