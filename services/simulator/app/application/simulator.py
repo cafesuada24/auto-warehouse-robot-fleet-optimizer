@@ -105,6 +105,7 @@ class Simulator:
         # bus: EventBus[T],
         event_publisher: EventPublisher,
         tick_hz: PositiveInt = 10,
+        q_size: PositiveInt = 10_000,
     ) -> None:
         # self.__bus = bus
         self.__event_publisher = event_publisher
@@ -119,7 +120,7 @@ class Simulator:
 
         self.__clock = SimClock(self.__tick_ms)
 
-        self.__command_queue = Queue[CommandBase]()
+        self.__command_queue = Queue[CommandBase](q_size)
 
         self.__stop_ev = threading.Event()
         self.__thread: threading.Thread | None = None
@@ -134,8 +135,13 @@ class Simulator:
         if not self.__cmd_ttl_cache.try_add(value=command.id, ts_ms=self.sim_time_ms):
             _logger.warning('Duplicated command detected, discarding...')
             return
-        _logger.info('Command queued to be executed')
-        self.__command_queue.put_nowait(command)
+
+        try:
+            self.__command_queue.put_nowait(command)
+            _logger.info('Command queued to be executed')
+        except queue.Full:
+            _logger.error('Command queue is full, stopping simulator...')
+            self.stop()
 
         logging_context.clear_context()
 
