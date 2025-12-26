@@ -238,7 +238,6 @@ class Simulator:
         self.__event_publisher.enqueue_all(events)
         return events
 
-
     def start(self) -> None:
         """Start the simulation."""
         if self.__thread is not None and self.__thread.is_alive():
@@ -303,11 +302,24 @@ class Simulator:
         for cmd in cmds:
             self.__execute_command(cmd)
 
-        robots = list(self.__world.robots.values())
-        for robot in robots:
-            self.__execute_robot_task(robot, dt_s)
-
         now = self.__world.time_ms
+
+        robots = list(self.__world.robots.values())
+        completed_tasks = [
+            DomainEvent(
+                topic='TASK:COMPLETED',
+                payload=ev,
+                time_ms=now,
+                policy=QoSPolicy.RELIABLE,
+            )
+            for robot in robots
+            if (ev := self.__execute_robot_task(robot, dt_s)) is not None
+        ]
+
+        # for robot in robots:
+        #     completed_ev = self.__execute_robot_task(robot, dt_s)
+        #     if completed_ev is not None:
+        #         completed_tasks.append(completed_ev)
 
         return [
             DomainEvent(
@@ -317,7 +329,7 @@ class Simulator:
                 policy=QoSPolicy.BEST_EFFORT,
             )
             for robot in robots
-        ]
+        ] + completed_tasks
 
     def __cancel_current_task(self, robot: Robot) -> None:
         task_id = robot.assigned_task_id
@@ -335,7 +347,7 @@ class Simulator:
             {
                 'command_id': command.id,
                 'robot_id': command.robot_id,
-            }
+            },
         )
 
         robot = self.__world.robots.get(command.robot_id)
@@ -357,7 +369,7 @@ class Simulator:
                     robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
                 case _:
                     _logger.error(
-                        f'Tried to execute unsupported command type: {command!r}'
+                        f'Tried to execute unsupported command type: {command!r}',
                     )
                     raise ValueError(f'Unsupported command type: {command!r}')
         finally:
@@ -376,19 +388,21 @@ class Simulator:
         dy = robot.intent.pos[1] - robot.pos[1]
         return dx**2 + dy**2 <= robot.arrive_eps_m**2
 
-    def __execute_robot_task(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
+    def __execute_robot_task(
+        self,
+        robot: Robot,
+        dt_s: NonNegativeFloat,
+    ) -> TaskCompletedEvent | None:
         if robot.assigned_task_id is None and robot.intent is None:
-            return
+            return None
 
         if self.__is_intent_done(robot):
-            robot.intent = None
-
             task_id = robot.assigned_task_id
             if task_id is None:
-                return
+                return None
             task = self.__world.tasks.get(task_id)
             if task is None:
-                return
+                return None
 
             advance_phase(task, robot)
 
@@ -397,30 +411,22 @@ class Simulator:
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
 
-                now = self.sim_time_ms
+                now = self.__world.time_ms
 
-                event = TaskCompletedEvent(
+                return TaskCompletedEvent(
                     id=task.id,
                     timestamp_ms=now,
                     duration_ms=0,
                 )
-                self.__event_publisher.enqueue_all(
-                    [
-                        DomainEvent(
-                            topic='TASK:COMPLETED',
-                            payload=event,
-                            time_ms=now,
-                            policy=QoSPolicy.RELIABLE,
-                        ),
-                    ],
-                )
 
-            return
+            return None
 
         if robot.intent.type == RobotGoalType.MOVE:
             self.__move_robot(robot, dt_s)
         else:
             self.__update_wait_remaining(robot, dt_s)
+
+        return None
 
     def __move_robot(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
         assert (
