@@ -13,11 +13,13 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
-from app.application.dtos.publish_request import PublishPolicy, PublishRequest
+from app.application.dtos.publish_request import PublishRequest
+from app.application.dtos.qos_policy import QoSPolicy
 from app.domain.models.command import (
     AssignTaskCommand,
     CancelTaskCommand,
     CommandBase,
+    CommandPolicy,
     MoveToCommand,
 )
 from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
@@ -128,22 +130,49 @@ class Simulator:
         self.__cmd_ttl_cache = TTLCache[IDType](use_wall_timer=False)
 
     def register_command(self, command: CommandBase) -> None:
-        """Register a command to be executed."""
         logging_context.clear_context()
-
-        _logger.info('New command requested')
-        if not self.__cmd_ttl_cache.try_add(value=command.id, ts_ms=self.sim_time_ms):
-            _logger.warning('Duplicated command detected, discarding...')
-            return
-
         try:
-            self.__command_queue.put_nowait(command)
-            _logger.info('Command queued to be executed')
-        except queue.Full:
-            _logger.error('Command queue is full, stopping simulator...')
-            self.stop()
+            cmd_id = command.id
+            now_ms = self.sim_time_ms
 
-        logging_context.clear_context()
+            if not self.__cmd_ttl_cache.try_add(value=cmd_id, ts_ms=now_ms):
+                _logger.info(
+                    'Duplicate command; drop',
+                    extra={'cmd_id': str(cmd_id), 'policy': str(command.policy)},
+                )
+                return
+
+            try:
+                if command.policy == CommandPolicy.BEST_EFFORT:
+                    self.__command_queue.put_nowait(command)
+                elif command.policy == CommandPolicy.MUST:
+                    self.__command_queue.put(command, timeout=0.2)
+                else:
+                    _logger.error(
+                        'Invalid command policy', extra={'cmd_id': str(cmd_id)}
+                    )
+                    self.__cmd_ttl_cache.remove(cmd_id, ts_ms=now_ms)
+                    return
+
+            except queue.Full:
+                # rollback “seen” so a retry can be accepted
+                self.__cmd_ttl_cache.remove(cmd_id, ts_ms=now_ms)
+
+                if command.policy == CommandPolicy.BEST_EFFORT:
+                    _logger.warning(
+                        'Queue full; drop BEST_EFFORT', extra={'cmd_id': str(cmd_id)}
+                    )
+                    return
+
+                _logger.error(
+                    'Queue full; MUST command rejected. Stopping simulator.',
+                    extra={'cmd_id': str(cmd_id)},
+                )
+                self.stop()
+                return
+
+        finally:
+            logging_context.clear_context()
 
     def create_task(
         self,
@@ -175,7 +204,7 @@ class Simulator:
                     topic='TASK:CREATED',
                     payload=event,
                     time_ms=now,
-                    policy=PublishPolicy.RELIABLE,
+                    policy=QoSPolicy.RELIABLE,
                 ),
             ],
         )
@@ -273,7 +302,7 @@ class Simulator:
                 topic='ROBOT_STATE',
                 payload=robot.snapshot(now),
                 time_ms=now,
-                policy=PublishPolicy.BEST_EFFORT,
+                policy=QoSPolicy.BEST_EFFORT,
             )
             for robot in robots
         ]
@@ -379,7 +408,7 @@ class Simulator:
                             topic='TASK:COMPLETED',
                             payload=event,
                             time_ms=now,
-                            policy=PublishPolicy.RELIABLE,
+                            policy=QoSPolicy.RELIABLE,
                         ),
                     ],
                 )
