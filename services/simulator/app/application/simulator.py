@@ -36,7 +36,7 @@ from awrfo.ttl_cache import TTLCache
 from awrfo.types import IDType
 from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 
-from .interfaces.ports.event_publisher import EventPublisher
+from .ports.event_publisher import EventPublisher
 
 _logger = get_logger('simulator')
 
