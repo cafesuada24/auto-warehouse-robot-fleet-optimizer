@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from .qos_policy import QoSPolicy
+from app.application.dtos.qos_policy import QoSPolicy
 
 
 @dataclass
-class PublishRequest:
+class DomainEvent:
     topic: str
     payload: object
     time_ms: int

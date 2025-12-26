@@ -13,8 +13,8 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
-from app.application.dtos.publish_request import PublishRequest
 from app.application.dtos.qos_policy import QoSPolicy
+from app.application.events.domain_event import DomainEvent
 from app.domain.models.command import (
     AssignTaskCommand,
     CancelTaskCommand,
@@ -200,7 +200,7 @@ class Simulator:
 
         self.__event_publisher.enqueue_all(
             [
-                PublishRequest(
+                DomainEvent(
                     topic='TASK:CREATED',
                     payload=event,
                     time_ms=now,
@@ -226,6 +226,18 @@ class Simulator:
     def sim_time_s(self) -> NonNegativeFloat:
         """Return the simulation time in seconds."""
         return self.__clock.time_s()
+
+    def tick_once(self) -> Iterable[DomainEvent]:
+        """Tick the simulator once."""
+        self.__clock.tick()
+        self.__world.time_ms = self.__clock.time_ms()
+
+        commands = self.__drain_commands()
+
+        events = self.__step(self.__dt_s, commands)
+        self.__event_publisher.enqueue_all(events)
+        return events
+
 
     def start(self) -> None:
         """Start the simulation."""
@@ -264,7 +276,7 @@ class Simulator:
                 if now < next_deadline:
                     sleep(next_deadline - now)
 
-                self.__tick()
+                self.tick_once()
 
                 next_deadline += tick_period_s
 
@@ -287,18 +299,18 @@ class Simulator:
         self,
         dt_s: NonNegativeFloat,
         cmds: Iterable[CommandBase],
-    ) -> Iterable[PublishRequest]:
+    ) -> Iterable[DomainEvent]:
         for cmd in cmds:
             self.__execute_command(cmd)
 
-        robots = self.__world.robots.values()
+        robots = list(self.__world.robots.values())
         for robot in robots:
             self.__execute_robot_task(robot, dt_s)
 
-        now = self.sim_time_ms
+        now = self.__world.time_ms
 
         return [
-            PublishRequest(
+            DomainEvent(
                 topic='ROBOT_STATE',
                 payload=robot.snapshot(now),
                 time_ms=now,
@@ -306,16 +318,6 @@ class Simulator:
             )
             for robot in robots
         ]
-
-    def __tick(self) -> None:
-        """Move the simulator forward an amount of 'dt' time."""
-        self.__clock.tick()
-        self.__world.time_ms = self.__clock.time_ms()
-
-        commands = self.__drain_commands()
-
-        events = self.__step(self.__dt_s, commands)
-        self.__event_publisher.enqueue_all(events)
 
     def __cancel_current_task(self, robot: Robot) -> None:
         task_id = robot.assigned_task_id
@@ -404,7 +406,7 @@ class Simulator:
                 )
                 self.__event_publisher.enqueue_all(
                     [
-                        PublishRequest(
+                        DomainEvent(
                             topic='TASK:COMPLETED',
                             payload=event,
                             time_ms=now,
