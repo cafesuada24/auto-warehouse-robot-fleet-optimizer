@@ -4,8 +4,8 @@ from collections.abc import Iterable
 
 from awrfo.logging.logger import get_logger
 
-from app.application.dtos.publish_request import PublishRequest
 from app.application.dtos.qos_policy import QoSPolicy
+from app.application.events.domain_event import DomainEvent
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers.mappers import convert_to_proto
 
@@ -21,7 +21,7 @@ class EventPublisher[T]:
         self.__bus = bus
         self.__thread: threading.Thread | None = None
         self.__stop = threading.Event()
-        self.__q = queue.Queue[PublishRequest](q_size)
+        self.__q = queue.Queue[DomainEvent](q_size)
 
     def start(self) -> None:
         """Start the publisher thread."""
@@ -42,7 +42,7 @@ class EventPublisher[T]:
 
         self.__thread = None
 
-    def enqueue_all(self, items: Iterable[PublishRequest]) -> None:
+    def enqueue_all(self, items: Iterable[DomainEvent]) -> None:
         for item in items:
             if item.policy is QoSPolicy.BEST_EFFORT:
                 try:
@@ -70,4 +70,3 @@ class EventPublisher[T]:
                     raise
             finally:
                 self.__q.task_done()
-
