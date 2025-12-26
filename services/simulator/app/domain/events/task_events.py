@@ -22,4 +22,22 @@ class TaskCreatedEvent(TaskEventBase):
 
 @dataclasses.dataclass(frozen=True)
 class TaskCompletedEvent(TaskEventBase):
+    robot_id: IDType
     duration_ms: NonNegativeInt
+
+
+@dataclasses.dataclass(frozen=True)
+class TaskAssignedEvent(TaskEventBase):
+    robot_id: IDType
+
+
+@dataclasses.dataclass(frozen=True)
+class TaskCancelledEvent(TaskEventBase):
+    robot_id: IDType
+    reason: str | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class TaskFailedEvent(TaskEventBase):
+    robot_id: IDType
+    reason: str
