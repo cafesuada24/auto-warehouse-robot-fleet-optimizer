@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package awrfo.contracts.commands.v1;
+
+enum CommandPolicy {
+  COMMAND_POLICY_BEST_EFFORT = 0;
+  COMMAND_POLICY_MUST = 1;
+}

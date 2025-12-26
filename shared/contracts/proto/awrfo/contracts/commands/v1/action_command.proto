@@ -5,14 +5,8 @@ package awrfo.contracts.commands.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "awrfo/contracts/schemas/common/v1/coordinate.proto";
-
-enum CommandType {
-  COMMAND_TYPE_UNSPECIFIED = 0;
-  COMMAND_TYPE_ASSIGN_TASK = 1;
-  COMMAND_TYPE_CANCEL_TASK = 2;
-  COMMAND_TYPE_MOVE_TO = 3;
-  COMMAND_TYPE_WAIT = 4;
-}
+import "awrfo/contracts/commands/v1/command_type.proto";
+import "awrfo/contracts/commands/v1/command_policy.proto";
 
 message ActionCommand {
   string id = 1 [
@@ -27,7 +21,11 @@ message ActionCommand {
     (buf.validate.field).string.uuid = true
   ];
 
-  CommandType type = 4 [
+  awrfo.contracts.commands.v1.CommandType type = 4 [
+    (buf.validate.field).required = true
+  ];
+
+  awrfo.contracts.commands.v1.CommandPolicy policy = 5 [
     (buf.validate.field).required = true
   ];
 
@@ -36,10 +34,10 @@ message ActionCommand {
     required: true
   };
 
-  AssignTask assign_task = 5;
-  CancelTask cancel_task = 6;
-  MoveTo move_to = 7;
-  Wait wait = 8;
+  AssignTask assign_task = 6;
+  CancelTask cancel_task = 7;
+  MoveTo move_to = 8;
+  Wait wait = 9;
 }
 
 message AssignTask {

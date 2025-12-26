@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package awrfo.contracts.commands.v1;
+
+enum CommandType {
+  COMMAND_TYPE_UNSPECIFIED = 0;
+  COMMAND_TYPE_ASSIGN_TASK = 1;
+  COMMAND_TYPE_CANCEL_TASK = 2;
+  COMMAND_TYPE_MOVE_TO = 3;
+  COMMAND_TYPE_WAIT = 4;
+}
