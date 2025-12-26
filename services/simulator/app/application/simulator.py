@@ -13,15 +13,12 @@ from collections.abc import Iterable
 from queue import Queue
 from time import monotonic, sleep
 
+from app.application.commands.base import CommandBase
+from app.application.commands.move_to import MoveToCommand
+from app.application.commands.policy import CommandPolicy
+from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
 from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
-from app.domain.models.command import (
-    AssignTaskCommand,
-    CancelTaskCommand,
-    CommandBase,
-    CommandPolicy,
-    MoveToCommand,
-)
 from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from app.domain.models.sim_clock import SimClock
 from app.domain.models.task import (

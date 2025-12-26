@@ -14,21 +14,17 @@ from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand
 from awrfo.contracts.commands.v1.command_policy_pb2 import CommandPolicy
 from awrfo.contracts.commands.v1.command_type_pb2 import CommandType
 
-from app.application.dtos.qos_policy import QoSPolicy
-from app.domain.models import command
-from app.domain.models.command import (
-    AssignTaskCommand,
-    CancelTaskCommand,
-    CommandBase,
-    MoveToCommand,
-)
+from app.application.commands import policy
+from app.application.commands.base import CommandBase
+from app.application.commands.move_to import MoveToCommand
+from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
 from app.types import IDType
 
-_POLICY_MAPPING: Final[Mapping[CommandPolicy, command.CommandPolicy]] = (
+_POLICY_MAPPING: Final[Mapping[CommandPolicy, policy.CommandPolicy]] = (
     MappingProxyType(
         {
-            CommandPolicy.COMMAND_POLICY_MUST: command.CommandPolicy.MUST,
-            CommandPolicy.COMMAND_POLICY_BEST_EFFORT: command.CommandPolicy.BEST_EFFORT,
+            CommandPolicy.COMMAND_POLICY_MUST: policy.CommandPolicy.MUST,
+            CommandPolicy.COMMAND_POLICY_BEST_EFFORT: policy.CommandPolicy.BEST_EFFORT,
         },
     )
 )

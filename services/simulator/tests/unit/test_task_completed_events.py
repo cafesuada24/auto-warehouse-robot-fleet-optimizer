@@ -2,10 +2,11 @@ from collections.abc import Iterable
 from uuid import uuid4
 
 import pytest
+from app.application.commands.policy import CommandPolicy
+from app.application.commands.task_commands import AssignTaskCommand
 from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
 from app.application.simulator import Simulator
-from app.domain.models.command import AssignTaskCommand, CommandPolicy
 from app.domain.models.map import Map
 from app.domain.models.robot import Robot
 from app.domain.models.task import Task, TaskStatus
