@@ -6,12 +6,12 @@ from awrfo.contracts.events.task.v1.task_completed_pb2 import TaskCompletedEvent
 from awrfo.contracts.events.task.v1.task_created_pb2 import TaskCreatedEvent
 from awrfo.contracts.schemas.common.v1.coordinate_pb2 import Coordinate
 
-from app.domain.models import task
+from app.domain.events import task_events
 from app.infra.mappers.mappers import convert_to_proto
 
 
 @convert_to_proto.register
-def taskcreated_event_to_proto(event: task.TaskCreatedEvent) -> TaskCreatedEvent:
+def taskcreated_event_to_proto(event: task_events.TaskCreatedEvent) -> TaskCreatedEvent:
     envelope = EventEnvelope(
         event_id=str(uuid4()),
         event_type='task.created.v1',
@@ -22,7 +22,7 @@ def taskcreated_event_to_proto(event: task.TaskCreatedEvent) -> TaskCreatedEvent
 
     return TaskCreatedEvent(
         envelope=envelope,
-        task_id=str(event.id),
+        task_id=str(event.task_id),
         pickup=Coordinate(
             x=event.pickup[0],
             y=event.pickup[1],
@@ -36,7 +36,7 @@ def taskcreated_event_to_proto(event: task.TaskCreatedEvent) -> TaskCreatedEvent
 
 
 @convert_to_proto.register
-def taskcompleted_event_to_proto(event: task.TaskCompletedEvent) -> TaskCompletedEvent:
+def taskcompleted_event_to_proto(event: task_events.TaskCompletedEvent) -> TaskCompletedEvent:
     envelope = EventEnvelope(
         event_id=str(uuid4()),
         event_type='task.completed.v1',
@@ -47,7 +47,7 @@ def taskcompleted_event_to_proto(event: task.TaskCompletedEvent) -> TaskComplete
 
     return TaskCompletedEvent(
         envelope=envelope,
-        task_id=str(event.id),
+        task_id=str(event.task_id),
         robot_id='',
         duration_s=timedelta(event.duration_ms / 1000.0),
         battery_used=0.0,
