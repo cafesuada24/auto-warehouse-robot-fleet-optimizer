@@ -48,7 +48,7 @@ def taskcompleted_event_to_proto(event: task_events.TaskCompletedEvent) -> TaskC
     return TaskCompletedEvent(
         envelope=envelope,
         task_id=str(event.task_id),
-        robot_id='',
+        robot_id=str(event.robot_id),
         duration_s=timedelta(event.duration_ms / 1000.0),
         battery_used=0.0,
     )
