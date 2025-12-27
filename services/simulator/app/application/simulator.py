@@ -275,8 +275,18 @@ class Simulator:
             daemon=True,
         )
         self.__thread.start()
-
         _logger.info('Simulator started')
+
+        self.__event_publisher.enqueue_all(
+            [
+                DomainEvent(
+                    topic='MAP:UPDATED',
+                    time_ms=self.__world.time_ms,
+                    policy=QoSPolicy.BEST_EFFORT,
+                    payload=self.__world.map.snapshot(self.__world.time_ms),
+                ),
+            ],
+        )
 
     def stop(self) -> None:
         """Stop event loop."""
