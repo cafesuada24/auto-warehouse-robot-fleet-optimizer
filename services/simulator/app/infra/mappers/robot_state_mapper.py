@@ -11,7 +11,8 @@ from awrfo.contracts.schemas.robot.v1.robot_state_pb2 import (
 
 from app.domain.models import robot
 from app.domain.models.robot import RobotStateSnapshot
-from app.infra.mappers.mappers import convert_to_proto
+
+from .mappers import convert_to_proto
 
 _DOMAIN_TO_PROTO_MODE = MappingProxyType(
     {
