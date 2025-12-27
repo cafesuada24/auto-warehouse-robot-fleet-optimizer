@@ -5,9 +5,11 @@ from pydantic import NonNegativeInt
 
 from app.domain.types import Position
 
+from .base import EventBase
+
 
 @dataclasses.dataclass(frozen=True)
-class TaskEventBase:
+class TaskEventBase(EventBase):
     task_id: IDType
     timestamp_ms: NonNegativeInt
 
