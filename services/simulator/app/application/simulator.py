@@ -19,7 +19,12 @@ from app.application.commands.policy import CommandPolicy
 from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
 from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
-from app.domain.events.task_events import TaskCompletedEvent, TaskCreatedEvent
+from app.domain.events.task_events import (
+    TaskAssignedEvent,
+    TaskCancelledEvent,
+    TaskCompletedEvent,
+    TaskCreatedEvent,
+)
 from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from app.domain.models.sim_clock import SimClock
 from app.domain.models.task import (
@@ -295,29 +300,25 @@ class Simulator:
         dt_s: NonNegativeFloat,
         cmds: Iterable[CommandBase],
     ) -> Iterable[DomainEvent]:
-        for cmd in cmds:
-            self.__execute_command(cmd)
+        events = [ev for cmd in cmds if (ev := self.__execute_command(cmd)) is not None]
 
         now = self.__world.time_ms
 
         robots = list(self.__world.robots.values())
-        completed_tasks = [
-            DomainEvent(
-                topic='TASK:COMPLETED',
-                payload=ev,
-                time_ms=now,
-                policy=QoSPolicy.RELIABLE,
-            )
-            for robot in robots
-            if (ev := self.__execute_robot_task(robot, dt_s)) is not None
-        ]
+        events.extend(
+            [
+                ev
+                for robot in robots
+                if (ev := self.__execute_robot_task(robot, dt_s)) is not None
+            ],
+        )
 
         # for robot in robots:
         #     completed_ev = self.__execute_robot_task(robot, dt_s)
         #     if completed_ev is not None:
         #         completed_tasks.append(completed_ev)
 
-        return [
+        return events + [
             DomainEvent(
                 topic='ROBOT_STATE',
                 payload=robot.snapshot(now),
@@ -325,7 +326,7 @@ class Simulator:
                 policy=QoSPolicy.BEST_EFFORT,
             )
             for robot in robots
-        ] + completed_tasks
+        ]
 
     def __cancel_current_task(self, robot: Robot) -> None:
         task_id = robot.assigned_task_id
@@ -336,7 +337,10 @@ class Simulator:
             self.__world.tasks[task_id].status = TaskStatus.CANCELLED
             # del self.__tasks[task_id]
 
-    def __execute_command(self, command: CommandBase) -> None:
+    def __execute_command(
+        self,
+        command: CommandBase,
+    ) -> DomainEvent | None:
         logging_context.clear_context()
 
         logging_context.bind_context(
@@ -348,7 +352,9 @@ class Simulator:
 
         robot = self.__world.robots.get(command.robot_id)
         if robot is None:
-            return
+            return None
+
+        now_ms = self.__world.time_ms
 
         try:
             match command:
@@ -359,8 +365,33 @@ class Simulator:
 
                     robot.assigned_task_id = command.task_id
                     self.__world.tasks[command.task_id].status = TaskStatus.ASSIGNED
+
+                    ev = TaskAssignedEvent(
+                        task_id=command.task_id,
+                        timestamp_ms=command.issued_at_ms,
+                        robot_id=robot.id,
+                    )
+                    return DomainEvent(
+                        topic='TASK:ASSIGNED',
+                        payload=ev,
+                        time_ms=now_ms,
+                        policy=QoSPolicy.RELIABLE,
+                    )
                 case CancelTaskCommand():
                     self.__cancel_current_task(robot)
+
+                    ev = TaskCancelledEvent(
+                        task_id=command.task_id,
+                        timestamp_ms=command.issued_at_ms,
+                        robot_id=robot.id,
+                        reason='Requested to be cancelled.',
+                    )
+                    return DomainEvent(
+                        topic='TASK:CANCELLED',
+                        payload=ev,
+                        time_ms=now_ms,
+                        policy=QoSPolicy.RELIABLE,
+                    )
                 case MoveToCommand():
                     robot.intent = RobotGoal(type=RobotGoalType.MOVE, pos=command.pos)
                 case _:
@@ -370,6 +401,8 @@ class Simulator:
                     raise ValueError(f'Unsupported command type: {command!r}')
         finally:
             logging_context.clear_context()
+
+        return None
 
     def __is_intent_done(self, robot: Robot) -> bool:
         if robot.intent is None:
@@ -388,7 +421,7 @@ class Simulator:
         self,
         robot: Robot,
         dt_s: NonNegativeFloat,
-    ) -> TaskCompletedEvent | None:
+    ) -> DomainEvent | None:
         if robot.assigned_task_id is None and robot.intent is None:
             return None
 
@@ -407,13 +440,20 @@ class Simulator:
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
 
-                now = self.__world.time_ms
+                now_ms = self.__world.time_ms
 
-                return TaskCompletedEvent(
+                payload = TaskCompletedEvent(
                     task_id=task.id,
                     robot_id=robot.id,
-                    timestamp_ms=now,
+                    timestamp_ms=now_ms,
                     duration_ms=0,
+                )
+
+                return DomainEvent(
+                    topic='TASK:COMPLETED',
+                    payload=payload,
+                    time_ms=now_ms,
+                    policy=QoSPolicy.RELIABLE,
                 )
 
             return None
