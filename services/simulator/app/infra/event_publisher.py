@@ -9,7 +9,7 @@ from app.application.events.domain_event import DomainEvent
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers.mappers import convert_to_proto
 
-from .mappers import action_command_mapper, robot_state_mapper, task_mapper
+from .mappers import action_command_mapper, map_mapper, robot_state_mapper, task_mapper
 
 _logger = get_logger('publisher')
 
