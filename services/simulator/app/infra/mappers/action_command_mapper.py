@@ -20,13 +20,11 @@ from app.application.commands.move_to import MoveToCommand
 from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
 from app.types import IDType
 
-_POLICY_MAPPING: Final[Mapping[CommandPolicy, policy.CommandPolicy]] = (
-    MappingProxyType(
-        {
-            CommandPolicy.COMMAND_POLICY_MUST: policy.CommandPolicy.MUST,
-            CommandPolicy.COMMAND_POLICY_BEST_EFFORT: policy.CommandPolicy.BEST_EFFORT,
-        },
-    )
+_POLICY_MAPPING: Final[Mapping[CommandPolicy, policy.CommandPolicy]] = MappingProxyType(
+    {
+        CommandPolicy.COMMAND_POLICY_MUST: policy.CommandPolicy.MUST,
+        CommandPolicy.COMMAND_POLICY_BEST_EFFORT: policy.CommandPolicy.BEST_EFFORT,
+    },
 )
 
 
