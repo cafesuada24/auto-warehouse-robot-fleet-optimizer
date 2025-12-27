@@ -27,7 +27,7 @@ from awrfo.contracts.envelopes.event_envelope.v1 import event_envelope_pb2 as aw
 from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as awrfo_dot_contracts_dot_schemas_dot_common_dot_v1_dot_coordinate__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n1awrfo/contracts/events/task/v1/task_created.proto\x12\x1e\x61wrfo.contracts.events.task.v1\x1a\x1b\x62uf/validate/validate.proto\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\"\xd9\x02\n\x10TaskCreatedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12$\n\x07task_id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01R\x06taskId\x12M\n\x06pickup\x18\x03 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01R\x06pickup\x12O\n\x07\x64ropoff\x18\x04 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01R\x07\x64ropoff\x12\'\n\x0b\x64\x65\x61\x64line_ms\x18\x05 \x01(\x04\x42\x06\xbaH\x03\xc8\x01\x01R\ndeadlineMsB\xd3\x01\n\"com.awrfo.contracts.events.task.v1B\x10TaskCreatedProtoP\x01\xa2\x02\x04\x41\x43\x45T\xaa\x02\x1e\x41wrfo.Contracts.Events.Task.V1\xca\x02\x1e\x41wrfo\\Contracts\\Events\\Task\\V1\xe2\x02*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\xea\x02\"Awrfo::Contracts::Events::Task::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n1awrfo/contracts/events/task/v1/task_created.proto\x12\x1e\x61wrfo.contracts.events.task.v1\x1a\x1b\x62uf/validate/validate.proto\x1a@awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto\x1a\x32\x61wrfo/contracts/schemas/common/v1/coordinate.proto\"\xcc\x03\n\x10TaskCreatedEvent\x12V\n\x08\x65nvelope\x18\x01 \x01(\x0b\x32:.awrfo.contracts.envelopes.event_envelope.v1.EventEnvelopeR\x08\x65nvelope\x12)\n\x07task_id\x18\x02 \x01(\tB\x0b\xbaH\x08r\x03\xb0\x01\x01\xc8\x01\x01H\x00R\x06taskId\x88\x01\x01\x12 \n\x05ts_ms\x18\x03 \x01(\x04\x42\x06\xbaH\x03\xc8\x01\x01H\x01R\x04tsMs\x88\x01\x01\x12R\n\x06pickup\x18\x04 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01H\x02R\x06pickup\x88\x01\x01\x12T\n\x07\x64ropoff\x18\x05 \x01(\x0b\x32-.awrfo.contracts.schemas.common.v1.CoordinateB\x06\xbaH\x03\xc8\x01\x01H\x03R\x07\x64ropoff\x88\x01\x01\x12,\n\x0b\x64\x65\x61\x64line_ms\x18\x06 \x01(\x04\x42\x06\xbaH\x03\xc8\x01\x01H\x04R\ndeadlineMs\x88\x01\x01\x42\n\n\x08_task_idB\x08\n\x06_ts_msB\t\n\x07_pickupB\n\n\x08_dropoffB\x0e\n\x0c_deadline_msB\xd3\x01\n\"com.awrfo.contracts.events.task.v1B\x10TaskCreatedProtoP\x01\xa2\x02\x04\x41\x43\x45T\xaa\x02\x1e\x41wrfo.Contracts.Events.Task.V1\xca\x02\x1e\x41wrfo\\Contracts\\Events\\Task\\V1\xe2\x02*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\xea\x02\"Awrfo::Contracts::Events::Task::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,6 +37,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._serialized_options = b'\n\"com.awrfo.contracts.events.task.v1B\020TaskCreatedProtoP\001\242\002\004ACET\252\002\036Awrfo.Contracts.Events.Task.V1\312\002\036Awrfo\\Contracts\\Events\\Task\\V1\342\002*Awrfo\\Contracts\\Events\\Task\\V1\\GPBMetadata\352\002\"Awrfo::Contracts::Events::Task::V1'
   _globals['_TASKCREATEDEVENT'].fields_by_name['task_id']._loaded_options = None
   _globals['_TASKCREATEDEVENT'].fields_by_name['task_id']._serialized_options = b'\272H\010r\003\260\001\001\310\001\001'
+  _globals['_TASKCREATEDEVENT'].fields_by_name['ts_ms']._loaded_options = None
+  _globals['_TASKCREATEDEVENT'].fields_by_name['ts_ms']._serialized_options = b'\272H\003\310\001\001'
   _globals['_TASKCREATEDEVENT'].fields_by_name['pickup']._loaded_options = None
   _globals['_TASKCREATEDEVENT'].fields_by_name['pickup']._serialized_options = b'\272H\003\310\001\001'
   _globals['_TASKCREATEDEVENT'].fields_by_name['dropoff']._loaded_options = None
@@ -44,5 +46,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_TASKCREATEDEVENT'].fields_by_name['deadline_ms']._loaded_options = None
   _globals['_TASKCREATEDEVENT'].fields_by_name['deadline_ms']._serialized_options = b'\272H\003\310\001\001'
   _globals['_TASKCREATEDEVENT']._serialized_start=233
-  _globals['_TASKCREATEDEVENT']._serialized_end=578
+  _globals['_TASKCREATEDEVENT']._serialized_end=693
 # @@protoc_insertion_point(module_scope)
