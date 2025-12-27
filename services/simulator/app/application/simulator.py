@@ -9,7 +9,7 @@
 import math
 import queue
 import threading
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from queue import Queue
 from time import monotonic, sleep
 
@@ -227,6 +227,28 @@ class Simulator:
     def sim_time_s(self) -> NonNegativeFloat:
         """Return the simulation time in seconds."""
         return self.__clock.time_s()
+
+    def tick_many(self, n: int) -> None:
+        """Tick the simulator 'n' times."""
+        for _ in range(n):
+            self.tick_once()
+
+    def tick_until(
+        self,
+        predicate: Callable[[], bool],
+        *,
+        max_ticks: int = 10_000,
+    ) -> bool:
+        """Tick until a condition is satisfied."""
+        for _ in range(max_ticks):
+            self.tick_once()
+            if predicate():
+                return True
+        return False
+
+    def is_running(self) -> bool:
+        """If the simulator is running."""
+        return not self.__stop_ev.is_set()
 
     def tick_once(self) -> Iterable[DomainEvent]:
         """Tick the simulator once."""
