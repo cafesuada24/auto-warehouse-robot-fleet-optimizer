@@ -10,7 +10,8 @@ from awrfo.contracts.events.task.v1.task_failed_pb2 import TaskFailedEvent
 from awrfo.contracts.schemas.common.v1.coordinate_pb2 import Coordinate
 
 from app.domain.events import task_events
-from app.infra.mappers.mappers import convert_to_proto
+
+from .mappers import convert_to_proto
 
 
 @convert_to_proto.register
