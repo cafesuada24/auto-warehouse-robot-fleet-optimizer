@@ -86,7 +86,8 @@ def test_task_completed_event_emitted_once() -> None:
         robot_id=robot.id,
         task_id=task.id,
         policy=CommandPolicy.MUST,
-        issued_at_ms=0,
+        # issued_at_ms=0,
+        timestamp_ms=sim.sim_time_ms,
     )
     sim.register_command(assign_cmd)
 
@@ -108,7 +109,8 @@ def test_task_completed_event_time_matches_world_time() -> None:
         robot_id=robot.id,
         task_id=task.id,
         policy=CommandPolicy.MUST,
-        issued_at_ms=0,
+        # issued_at_ms=0,
+        timestamp_ms=sim.sim_time_ms,
     )
     sim.register_command(assign_cmd)
 
@@ -139,7 +141,8 @@ def test_task_completion_clears_robot_fields() -> None:
         robot_id=robot.id,
         task_id=task.id,
         policy=CommandPolicy.MUST,
-        issued_at_ms=0,
+        # issued_at_ms=0,
+        timestamp_ms=sim.sim_time_ms,
     )
     sim.register_command(assign_cmd)
 
@@ -165,7 +168,8 @@ def test_task_completed_is_reliable_policy() -> None:
         robot_id=robot.id,
         task_id=task.id,
         policy=CommandPolicy.MUST,
-        issued_at_ms=0,
+        # issued_at_ms=0,
+        timestamp_ms=sim.sim_time_ms,
     )
     sim.register_command(assign_cmd)
 
