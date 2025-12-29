@@ -13,6 +13,7 @@ from typing import Final
 from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand
 from awrfo.contracts.commands.v1.command_policy_pb2 import CommandPolicy
 from awrfo.contracts.commands.v1.command_type_pb2 import CommandType
+from pydantic import NonNegativeInt
 
 from app.application.commands import policy
 from app.application.commands.base import CommandBase
@@ -28,7 +29,7 @@ _POLICY_MAPPING: Final[Mapping[CommandPolicy, policy.CommandPolicy]] = MappingPr
 )
 
 
-def proto_to_command(action_command: ActionCommand) -> CommandBase:
+def proto_to_command(action_command: ActionCommand, ts_ms: NonNegativeInt) -> CommandBase:
     """Convert an ActionCommand proto to a specific command that is executable by the simulator."""
     if action_command.type == CommandType.COMMAND_TYPE_ASSIGN_TASK:
         if not action_command.HasField('assign_task'):
@@ -41,6 +42,7 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             robot_id=IDType(action_command.robot_id),
             issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
+            timestamp_ms=ts_ms,
         )
 
     if action_command.type == CommandType.COMMAND_TYPE_MOVE_TO:
@@ -58,6 +60,7 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             else 0.1,
             issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
+            timestamp_ms=ts_ms,
         )
 
     if action_command.type == CommandType.COMMAND_TYPE_CANCEL_TASK:
@@ -72,12 +75,13 @@ def proto_to_command(action_command: ActionCommand) -> CommandBase:
             task_id=IDType(action_command.cancel_task.task_id),
             issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
+            timestamp_ms=ts_ms,
         )
 
     raise ValueError(f'Unsupported ActionCommand payload: {action_command}')
 
 
-def serialized_proto_to_command(serialized: bytes) -> CommandBase:
+def serialized_proto_to_command(serialized: bytes, ts_ms: NonNegativeInt) -> CommandBase:
     """Convert an serialized ActionCommand proto to a specific command that is executable by the simulator."""
     ac = ActionCommand().FromString(serialized)
-    return proto_to_command(ac)
+    return proto_to_command(ac, ts_ms)
