@@ -10,6 +10,7 @@ from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
 from app.infra.bus.event_bus import EventBus
 from app.infra.mappers.mappers import convert_to_proto
+from app.infra.persistence.event_store import EventStore
 
 from .mappers import action_command_mapper, map_mapper, robot_state_mapper, task_mapper
 
@@ -17,13 +18,20 @@ _logger = get_logger('publisher')
 
 
 class EventPublisher[T]:
-    def __init__(self, bus: EventBus[T], q_size: int = 10_000) -> None:
+    def __init__(
+        self,
+        bus: EventBus[T],
+        q_size: int = 10_000,
+        *,
+        store: EventStore | None = None,
+    ) -> None:
         super().__init__()
 
         self.__bus = bus
         self.__thread: threading.Thread | None = None
         self.__stop = threading.Event()
         self.__q = queue.Queue[DomainEvent](q_size)
+        self.__store = store
 
     def start(self) -> None:
         """Start the publisher thread."""
@@ -83,9 +91,20 @@ class EventPublisher[T]:
                 serialized: bytes = proto_type.SerializeToString()
 
                 self.__bus.publish_event(item.topic, serialized)
+
             except NotImplementedError as e:
                 _logger.exception('Mapper missing: %s', e)
                 if item.policy == QoSPolicy.RELIABLE:
                     self.__stop.set()
+                continue
             finally:
                 self.__q.task_done()
+
+            if self.__store is None:
+                continue
+
+            try:
+                self.__store.store(item)
+
+            except Exception as e:
+                _logger.error(f'Failed to store event: {str(e)}')
