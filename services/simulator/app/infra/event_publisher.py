@@ -1,8 +1,10 @@
 import queue
 import threading
 from collections.abc import Iterable
+from time import monotonic, sleep
 
 from awrfo.logging.logger import get_logger
+from pydantic import NonNegativeFloat
 
 from app.application.dtos.qos_policy import QoSPolicy
 from app.application.events.domain_event import DomainEvent
@@ -42,15 +44,32 @@ class EventPublisher[T]:
 
         self.__thread = None
 
+    def wait_until_empty(self, timeout_s: NonNegativeFloat = 2.0) -> bool:
+        """
+        Block until all enqueued items are processed (q.task_done called),
+        or timeout occurs. Returns True if drained.
+        """
+
+        deadline = monotonic() + timeout_s
+        while monotonic() < deadline:
+            if self.__q.unfinished_tasks == 0:
+                return True
+            sleep(0.01)
+        return self.__q.unfinished_tasks == 0
+
     def enqueue_all(self, items: Iterable[DomainEvent]) -> None:
         for item in items:
-            if item.policy is QoSPolicy.BEST_EFFORT:
+            if item.policy == QoSPolicy.BEST_EFFORT:
                 try:
                     self.__q.put_nowait(item)
                 except queue.Full:
                     continue
-            elif item.policy is QoSPolicy.RELIABLE:
-                self.__q.put(item)
+            elif item.policy == QoSPolicy.RELIABLE:
+                try:
+                    self.__q.put(item, timeout=0.2)
+                except queue.Full as e:
+                    _logger.error('Publisher queue full; cannot enqueue RELIABLE event')
+                    raise RuntimeError('Publisher queue is Full') from e
 
     def __run(self) -> None:
         while not self.__stop.is_set():
@@ -65,8 +84,8 @@ class EventPublisher[T]:
 
                 self.__bus.publish_event(item.topic, serialized)
             except NotImplementedError as e:
-                _logger.warning(e)
-                if item.policy is QoSPolicy.RELIABLE:
-                    raise
+                _logger.exception('Mapper missing: %s', e)
+                if item.policy == QoSPolicy.RELIABLE:
+                    self.__stop.set()
             finally:
                 self.__q.task_done()
