@@ -71,7 +71,11 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
 
     robots = {(rid := uuid4()): Robot((0.0, i), id=rid) for i in range(2)}
     world = World(
-        map=Map(100, 100, set()),
+        map=Map.random(
+            size=(30, 30),
+            seed=1234,
+            num_obstacles=8,
+        ),
         robots=robots,
     )
     # context['world'] = world
@@ -90,15 +94,15 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     event_bus.subscribe(
         'COMMAND',
         lambda msg: simulator.register_command(
-            serialized_proto_to_command(msg['data']),
+            serialized_proto_to_command(msg['data'], ts_ms=simulator.sim_time_ms),
         ),
     )
     event_bus.start()
     event_publisher.start()
     simulator.start()
 
-    await asyncio.sleep(2.0)
-    simulator.create_task((10, 20), (50, 10), 5)
+    # await asyncio.sleep(2.0)
+    # simulator.create_task((10, 5), (20, 29), 5)
 
     yield
 
