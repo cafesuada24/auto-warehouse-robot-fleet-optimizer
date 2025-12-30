@@ -24,6 +24,7 @@ from app.domain.events.task_events import (
     TaskCancelledEvent,
     TaskCompletedEvent,
     TaskCreatedEvent,
+    TaskFailedEvent,
 )
 from app.domain.models.robot import Robot, RobotGoal, RobotGoalType, RobotState
 from app.domain.models.sim_clock import SimClock
@@ -44,6 +45,66 @@ from pydantic import NonNegativeFloat, NonNegativeInt, PositiveInt
 from .ports.event_publisher import EventPublisher
 
 _logger = get_logger('simulator')
+
+
+def _clear_robot_task(robot: Robot) -> None:
+    robot.task_phase = None
+    robot.state = RobotState.IDLE
+    robot.intent = None
+    robot.assigned_task_id = None
+
+
+def _move_robot(
+    robot: Robot, dt_s: NonNegativeFloat, obstacles: set[tuple[int, int]]
+) -> None:
+    assert (
+        robot.intent is not None
+        and robot.intent.type == RobotGoalType.MOVE
+        and robot.intent.pos is not None
+    )
+
+    dist = distance(robot.intent.pos, robot.pos)
+    if dist == 0.0:
+        return
+    dx = robot.intent.pos[0] - robot.pos[0]
+    dy = robot.intent.pos[1] - robot.pos[1]
+    step = robot.max_speed_mps * dt_s
+    new_pos = (
+        robot.pos[0] + dx / dist * step,
+        robot.pos[1] + dy / dist * step,
+    )
+    if (
+        math.floor(new_pos[0]),
+        math.floor(new_pos[1]),
+    ) not in obstacles:
+        robot.pos = new_pos
+
+
+def _update_wait_remaining(robot: Robot, dt_s: NonNegativeFloat) -> None:
+    assert (
+        robot.intent is not None
+        and robot.intent.type == RobotGoalType.WAIT
+        and robot.intent.wait_remaining_ms is not None
+    )
+
+    robot.intent.wait_remaining_ms = max(
+        0,
+        robot.intent.wait_remaining_ms - int(dt_s * 1000),
+    )
+
+
+def _is_intent_done(robot: Robot) -> bool:
+    if robot.intent is None:
+        return True
+
+    if robot.intent.type == RobotGoalType.WAIT:
+        return robot.intent.wait_remaining_ms == 0.0
+
+    assert robot.intent.pos is not None
+
+    dx = robot.intent.pos[0] - robot.pos[0]
+    dy = robot.intent.pos[1] - robot.pos[1]
+    return dx**2 + dy**2 <= robot.arrive_eps_m**2
 
 
 def advance_phase(task: Task, robot: Robot) -> None:
@@ -90,12 +151,8 @@ def advance_phase(task: Task, robot: Robot) -> None:
             return
 
         case TaskPhase.DROPPING:
-            robot.task_phase = None
             task.status = TaskStatus.COMPLETED
-
-            robot.state = RobotState.IDLE
-            robot.intent = None
-            robot.assigned_task_id = None
+            _clear_robot_task(robot)
             return
         case _:
             raise ValueError(f'Unknown task phase: {robot.task_phase}')
@@ -372,10 +429,9 @@ class Simulator:
         task_id = robot.assigned_task_id
         if task_id is None:
             return None
-        robot.assigned_task_id = None
-        robot.intent = None
-        robot.state = RobotState.IDLE
         self.__world.tasks[task_id].status = TaskStatus.CANCELLED
+        _clear_robot_task(robot)
+
         # del self.__tasks[task_id]
         return DomainEvent(
             topic='TASK:CANCELLED',
@@ -402,9 +458,7 @@ class Simulator:
             },
         )
 
-        robot = self.__world.robots.get(command.robot_id)
-        if robot is None:
-            return []
+        robot = self.__world.robots[command.robot_id]
 
         now_ms = self.__world.time_ms
         events: list[DomainEvent] = []
@@ -449,19 +503,6 @@ class Simulator:
 
         return events
 
-    def __is_intent_done(self, robot: Robot) -> bool:
-        if robot.intent is None:
-            return True
-
-        if robot.intent.type == RobotGoalType.WAIT:
-            return robot.intent.wait_remaining_ms == 0.0
-
-        assert robot.intent.pos is not None
-
-        dx = robot.intent.pos[0] - robot.pos[0]
-        dy = robot.intent.pos[1] - robot.pos[1]
-        return dx**2 + dy**2 <= robot.arrive_eps_m**2
-
     def __execute_robot_task(
         self,
         robot: Robot,
@@ -470,11 +511,32 @@ class Simulator:
         if robot.assigned_task_id is None and robot.intent is None:
             return None
 
-        if self.__is_intent_done(robot):
-            task_id = robot.assigned_task_id
-            if task_id is None:
-                return None
+        now_ms = self.__world.time_ms
+
+        task_id = robot.assigned_task_id
+        task = None
+        if task_id is not None:
             task = self.__world.tasks.get(task_id)
+
+        if task is not None and task.deadline_ms <= now_ms:
+            task.status = TaskStatus.FAILED
+            _clear_robot_task(robot)
+
+            payload = TaskFailedEvent(
+                task_id=task.id,
+                robot_id=robot.id,
+                timestamp_ms=now_ms,
+                reason='Task timeout',
+            )
+
+            return DomainEvent(
+                topic='TASK:FAILED',
+                payload=payload,
+                time_ms=now_ms,
+                policy=QoSPolicy.RELIABLE,
+            )
+
+        if _is_intent_done(robot):
             if task is None:
                 return None
 
@@ -484,8 +546,6 @@ class Simulator:
                 # no more task to do, reset robot state
                 robot.assigned_task_id = None
                 robot.state = RobotState.IDLE
-
-                now_ms = self.__world.time_ms
 
                 payload = TaskCompletedEvent(
                     task_id=task.id,
@@ -504,43 +564,8 @@ class Simulator:
             return None
 
         if robot.intent.type == RobotGoalType.MOVE:
-            self.__move_robot(robot, dt_s)
+            _move_robot(robot, dt_s, self.__world.map.obstacles)
         else:
-            self.__update_wait_remaining(robot, dt_s)
+            _update_wait_remaining(robot, dt_s)
 
         return None
-
-    def __move_robot(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
-        assert (
-            robot.intent is not None
-            and robot.intent.type == RobotGoalType.MOVE
-            and robot.intent.pos is not None
-        )
-
-        dist = distance(robot.intent.pos, robot.pos)
-        if dist == 0.0:
-            return
-        dx = robot.intent.pos[0] - robot.pos[0]
-        dy = robot.intent.pos[1] - robot.pos[1]
-        step = robot.max_speed_mps * dt_s
-        new_pos = (
-            robot.pos[0] + dx / dist * step,
-            robot.pos[1] + dy / dist * step,
-        )
-        if (
-            math.floor(new_pos[0]),
-            math.floor(new_pos[1]),
-        ) not in self.__world.map.obstacles:
-            robot.pos = new_pos
-
-    def __update_wait_remaining(self, robot: Robot, dt_s: NonNegativeFloat) -> None:
-        assert (
-            robot.intent is not None
-            and robot.intent.type == RobotGoalType.WAIT
-            and robot.intent.wait_remaining_ms is not None
-        )
-
-        robot.intent.wait_remaining_ms = max(
-            0,
-            robot.intent.wait_remaining_ms - int(dt_s * 1000),
-        )
