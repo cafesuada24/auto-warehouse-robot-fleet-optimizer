@@ -40,7 +40,6 @@ def proto_to_command(action_command: ActionCommand, ts_ms: NonNegativeInt) -> Co
             id=IDType(action_command.id),
             task_id=IDType(action_command.assign_task.task_id),
             robot_id=IDType(action_command.robot_id),
-            issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
             timestamp_ms=ts_ms,
         )
@@ -58,7 +57,6 @@ def proto_to_command(action_command: ActionCommand, ts_ms: NonNegativeInt) -> Co
             arrive_eps=action_command.move_to.arrive_eps
             if action_command.move_to.HasField('arrive_eps')
             else 0.1,
-            issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
             timestamp_ms=ts_ms,
         )
@@ -73,7 +71,6 @@ def proto_to_command(action_command: ActionCommand, ts_ms: NonNegativeInt) -> Co
             id=IDType(action_command.id),
             robot_id=IDType(action_command.robot_id),
             task_id=IDType(action_command.cancel_task.task_id),
-            issued_at_ms=0,
             policy=_POLICY_MAPPING[action_command.policy],
             timestamp_ms=ts_ms,
         )
