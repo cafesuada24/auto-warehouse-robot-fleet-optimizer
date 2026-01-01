@@ -54,6 +54,11 @@ class TTLCache[V]:
             self.__set.discard(value)
             self.__evict(ts_ms)
 
+    def reset(self) -> None:
+        with self.__lock:
+            self.__set.clear()
+            self.__q.clear()
+
     def __evict(self, ts_ms: int) -> None:
         while self.__q and self.__q[0].expire_ts_ms <= ts_ms:
             val = self.__q.popleft()
