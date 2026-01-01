@@ -1,44 +1,85 @@
 import base64
-from collections.abc import Generator
-from dataclasses import asdict
+import os
+import threading
+from collections.abc import Iterator
+from pathlib import Path
 
 from awrfo.logging.logger import json
+from pydantic import NonNegativeInt
 
-from app.application.events.domain_event import DomainEvent
-from app.infra.mappers.mappers import convert_to_proto
+from .event_store import EventRecord
 
-
-def _domain_event_to_dict(data: DomainEvent) -> dict[str, int | float | str]:
-    proto_type = convert_to_proto(data.payload)
-    serialized: bytes = proto_type.SerializeToString()
-    itemdict = asdict(data)
-    itemdict['payload_type'] = data.payload.__class__.__name__
-    itemdict['payload'] = base64.b64encode(serialized).decode('ascii')
-    itemdict['policy'] = data.policy.value
-    return itemdict
 
 class JSONLEventStore:
-    def __init__(self, filename: str = 'data/events.jsonl') -> None:
-        self.__filename = filename
+    def __init__(
+        self, filename: str = 'data/events.jsonl', *, fsync: bool = False
+    ) -> None:
+        self.__file = Path(filename)
+        self.__file.parent.mkdir(parents=True, exist_ok=True)
 
-    def store(self, event: DomainEvent) -> None:
-        data = _domain_event_to_dict(event)
-        with open(self.__filename, 'a') as f:
-            json.dump(data, f)
-            f.write('\n')
+        self.__fh = self.__file.open('a', encoding='utf-8', buffering=1)
 
-    def iter(self) -> Generator[DomainEvent]:
-        ...
-        # with open(self.__filename) as f:
-        #     line = f.readline()
-        #     if not line:
-        #         return
-        #     itemdict = json.loads(line)
-        #     yield DomainEvent(
-        #         topic=itemdict['topic'],
-        #         time_ms=itemdict['time_ms'],
-        #         policy=QoSPolicy(itemdict['policy']),
-        #         payload=base64.b64decode(itemdict['payload'].encode('ascii')),
-        #     )
+        self.__lock = threading.Lock()
+        self.__seq = 0
 
+        self.__fsync = fsync
 
+    def store(
+        self,
+        *,
+        topic: str,
+        time_ms: NonNegativeInt,
+        policy: int,
+        payload_type: str,
+        payload_bytes: bytes,
+    ) -> EventRecord:
+        """Append a single event record. Returns the written record."""
+        payload_b64 = base64.b64encode(payload_bytes).decode('ascii')
+
+        with self.__lock:
+            self.__seq += 1
+            rec = EventRecord(
+                seq=self.__seq,
+                topic=topic,
+                time_ms=time_ms,
+                policy=policy,
+                payload_type=payload_type,
+                payload_b64=payload_b64,
+            )
+            self.__fh.write(json.dumps(rec.__dict__, separators=(',', ':')) + '\n')
+            if self.__fsync:
+                self.__fh.flush()
+                os.fsync(self.__fh.fileno())
+            return rec
+
+    def close(self) -> None:
+        with self.__lock:
+            try:
+                self.__fh.flush()
+                if self.__fsync:
+                    os.fsync(self.__fh.fileno())
+            finally:
+                self.__fh.close()
+
+    @staticmethod
+    def iter_file(file: str) -> Iterator[EventRecord]:
+        """Iterate records from a JSONL file."""
+        path = Path(file)
+        with path.open('r', encoding='utf-8') as f:
+            for line in f:
+                ln = line.strip()
+                if not ln:
+                    continue
+                obj = json.loads(ln)
+                yield EventRecord(
+                    seq=int(obj['seq']),
+                    topic=str(obj['topic']),
+                    time_ms=int(obj['time_ms']),
+                    policy=int(obj['policy']),
+                    payload_type=str(obj.get('payload_type', '')),
+                    payload_b64=str(obj.get('payload_b64', '')),
+                )
+
+    @staticmethod
+    def decode_payload_bytes(rec: EventRecord) -> bytes:
+        return base64.b64decode(rec.payload_b64.encode("ascii"))

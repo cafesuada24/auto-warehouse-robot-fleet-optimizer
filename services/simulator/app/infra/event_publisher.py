@@ -1,4 +1,5 @@
 import queue
+import re
 import threading
 from collections.abc import Iterable
 from time import monotonic, sleep
@@ -104,7 +105,13 @@ class EventPublisher[T]:
                 continue
 
             try:
-                self.__store.store(item)
+                self.__store.store(
+                    topic=item.topic,
+                    time_ms=item.time_ms,
+                    policy=item.policy.value,
+                    payload_type=proto_type.DESCRIPTOR.full_name,
+                    payload_bytes=serialized,
+                )
 
             except Exception as e:
                 _logger.error(f'Failed to store event: {str(e)}')
