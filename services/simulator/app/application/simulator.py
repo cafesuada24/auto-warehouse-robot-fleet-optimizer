@@ -6,6 +6,7 @@
 # permission of the copyright holders.  If you encounter this file and do not have
 # permission, please contact the copyright holders and delete this file.
 
+import copy
 import math
 import queue
 import threading
@@ -170,6 +171,8 @@ class Simulator:
         # self.__bus = bus
         self.__event_publisher = event_publisher
 
+        self.__q_size = q_size
+
         self.__tick_hz = tick_hz
         self.__tick_ms = 1000 // self.__tick_hz
         self.__dt_s = self.__tick_ms / 1000.0
@@ -177,6 +180,7 @@ class Simulator:
         self.__world = world
         self.__world.time_ms = 0
         self.__world.tick_ms = self.__tick_ms
+        self.__world_copy = copy.deepcopy(self.__world)
 
         self.__clock = SimClock(self.__tick_ms)
 
@@ -354,6 +358,18 @@ class Simulator:
         self.__thread = None
 
         _logger.info('Simulator stopped')
+
+    def reset(self) -> None:
+        is_running = not self.__stop_ev.is_set()
+        self.stop()
+        self.__world = copy.deepcopy(self.__world_copy)
+        self.__clock.reset()
+        self.__event_publisher.reset()
+        self.__command_queue = Queue[CommandBase](self.__q_size)
+        self.__cmd_ttl_cache.reset()
+
+        if is_running:
+            self.start()
 
     def __run_loop(self) -> None:
         tick_period_s = 1.0 / self.__tick_hz

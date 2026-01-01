@@ -73,3 +73,12 @@ class SimClock:
                         return False
                     self.__cv.wait(timeout=remaining)
             return self.__tick_count >= target_tick
+
+    def reset(self) -> None:
+        is_running = self.__running
+        self.stop()
+        with self.__lock:
+            self.__time_ms = 0
+            self.__tick_count = 0
+        if is_running:
+            self.start()
