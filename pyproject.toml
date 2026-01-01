@@ -10,7 +10,7 @@ dependencies = []
 
 
 [tool.uv.workspace]
-members = ["services/*", "shared/library/awrfo-python"]
+members = ["services/allocator", "shared/library/awrfo-python"]
 
 [tool.ruff]
 line-length = 88
