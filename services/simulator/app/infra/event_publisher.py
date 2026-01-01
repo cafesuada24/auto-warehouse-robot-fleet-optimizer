@@ -31,7 +31,8 @@ class EventPublisher[T]:
         self.__bus = bus
         self.__thread: threading.Thread | None = None
         self.__stop = threading.Event()
-        self.__q = queue.Queue[DomainEvent](q_size)
+        self.__q_size = q_size
+        self.__q = queue.Queue[DomainEvent](self.__q_size)
         self.__store = store
 
     def start(self) -> None:
@@ -79,6 +80,14 @@ class EventPublisher[T]:
                 except queue.Full as e:
                     _logger.error('Publisher queue full; cannot enqueue RELIABLE event')
                     raise RuntimeError('Publisher queue is Full') from e
+
+    def reset(self) -> None:
+        is_running = not self.__stop.is_set()
+        self.stop()
+        self.__q = queue.Queue[DomainEvent](self.__q_size)
+
+        if is_running:
+            self.start()
 
     def __run(self) -> None:
         while not self.__stop.is_set():

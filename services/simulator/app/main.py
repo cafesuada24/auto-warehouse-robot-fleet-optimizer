@@ -27,6 +27,8 @@ from app.infra.bus.redis_bus import (
 )
 from app.infra.event_publisher import EventPublisher
 from app.infra.mappers.action_command_mapper import serialized_proto_to_command
+from app.infra.mappers.mappers import get_model_converter
+from app.infra.persistence.jsonl_event_store import JSONLEventStore
 
 load_dotenv()
 
@@ -83,6 +85,13 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     event_bus = RedisBusAdapter()
     context['event_bus'] = event_bus
 
+    # store = JSONLEventStore()
+
+    for de in JSONLEventStore.iter_file('data/events.jsonl'):
+        converter = get_model_converter(de.payload_type)
+        cmd = converter(JSONLEventStore.decode_payload_bytes(de), de.time_ms)
+        print(cmd)
+
     event_publisher = EventPublisher(bus=event_bus)
     simulator = Simulator(
         world=world,
@@ -91,23 +100,35 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
     )
     context['simulator'] = simulator
 
+    def _command_handler(msg: Any):
+        now = simulator.sim_time_ms
+        simulator.register_command(
+            serialized_proto_to_command(msg['data'], ts_ms=now),
+        )
+        # store.store(
+        #     topic='COMMAND',
+        #     time_ms=simulator.sim_time_ms,
+        #     policy=QoSPolicy.RELIABLE.value,
+        #     payload_type=ActionCommand.DESCRIPTOR.full_name,
+        #     payload_bytes=msg['data'],
+        # )
+
     event_bus.subscribe(
         'COMMAND',
-        lambda msg: simulator.register_command(
-            serialized_proto_to_command(msg['data'], ts_ms=simulator.sim_time_ms),
-        ),
+        _command_handler,
     )
     event_bus.start()
     event_publisher.start()
     simulator.start()
 
-    # await asyncio.sleep(2.0)
-    # simulator.create_task((10, 5), (20, 29), 5)
+    await asyncio.sleep(2.0)
+    simulator.create_task((10, 5), (20, 29), 60)
 
     yield
 
     simulator.stop()
     event_publisher.stop()
+    # store.close()
     event_bus.cleanup()
     # sim_fut.cancel()
 
@@ -118,3 +139,10 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, Any]:
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.post('/sim/reset')
+def reset_sim() -> None:
+    if (sim := context.get('simulator')) is None:
+        return
+    sim.reset()
