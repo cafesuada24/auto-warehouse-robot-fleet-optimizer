@@ -19,6 +19,7 @@ from app.application.commands import policy
 from app.application.commands.base import CommandBase
 from app.application.commands.move_to import MoveToCommand
 from app.application.commands.task_commands import AssignTaskCommand, CancelTaskCommand
+from app.infra.mappers.mappers import register_model_converter
 from app.types import IDType
 
 _POLICY_MAPPING: Final[Mapping[CommandPolicy, policy.CommandPolicy]] = MappingProxyType(
@@ -78,6 +79,7 @@ def proto_to_command(action_command: ActionCommand, ts_ms: NonNegativeInt) -> Co
     raise ValueError(f'Unsupported ActionCommand payload: {action_command}')
 
 
+@register_model_converter(ActionCommand.DESCRIPTOR.full_name)
 def serialized_proto_to_command(serialized: bytes, ts_ms: NonNegativeInt) -> CommandBase:
     """Convert an serialized ActionCommand proto to a specific command that is executable by the simulator."""
     ac = ActionCommand().FromString(serialized)

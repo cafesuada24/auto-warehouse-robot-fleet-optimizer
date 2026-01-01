@@ -8,7 +8,7 @@ from awrfo.contracts.events.map.v1.map_updated_pb2 import (
 
 from app.domain.models.map import Map, MapSnapshot
 
-from .mappers import convert_to_proto
+from .mappers import convert_to_proto, register_model_converter
 
 
 @convert_to_proto.register
@@ -37,6 +37,7 @@ def map_snapshot_to_proto(snapshot: MapSnapshot) -> MapUpdatedEvent:
     )
 
 
+@register_model_converter(MapUpdatedEvent.DESCRIPTOR.full_name)
 def map_updated_proto_to_model(serialized: bytes) -> Map:
     mu = MapUpdatedEvent.FromString(serialized)
     payload = mu.payload
