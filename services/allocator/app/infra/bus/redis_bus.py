@@ -1,8 +1,7 @@
 import redis
+from app.application.ports.event_bus import EventMessage
 from awrfo.logging.logger import get_logger
 from pydantic import NonNegativeFloat
-
-from services.allocator.app.application.ports.event_bus import EventMessage
 
 _logger = get_logger('redis_bus')
 
