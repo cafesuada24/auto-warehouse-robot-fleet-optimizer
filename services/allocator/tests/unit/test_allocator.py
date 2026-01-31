@@ -1,4 +1,5 @@
 import pytest
+import math
 from app.application.allocator import Allocator
 from app.application.ports.event_bus import EventMessage
 from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand
@@ -13,11 +14,12 @@ from pydantic import NonNegativeFloat
 # Fake bus
 # -------------------------
 
-R1_ID = UUID("00000000-0000-0000-0000-000000000001")
-R2_ID = UUID("00000000-0000-0000-0000-000000000002")
+R1_ID = UUID('00000000-0000-0000-0000-000000000001')
+R2_ID = UUID('00000000-0000-0000-0000-000000000002')
 
-T1_ID = UUID("00000000-0000-0000-0000-000000000101")
-T2_ID = UUID("00000000-0000-0000-0000-000000000102")
+T1_ID = UUID('00000000-0000-0000-0000-000000000101')
+T2_ID = UUID('00000000-0000-0000-0000-000000000102')
+
 
 class FakeBus:
     def __init__(self) -> None:
@@ -41,7 +43,10 @@ class FakeBus:
 # Helpers to build protos
 # -------------------------
 
-def make_robot_state(*, rid: str, x: float, y: float, ts_ms: int, battery: float) -> bytes:
+
+def make_robot_state(
+    *, rid: str, x: float, y: float, ts_ms: int, battery: float
+) -> bytes:
     msg = RobotState(
         id=rid,
         ts_ms=ts_ms,
@@ -79,16 +84,22 @@ def drain_once(alloc: Allocator) -> None:
 # Tests
 # -------------------------
 
-def test_robot_state_projection_updates_latest_fields():
 
+def test_robot_state_projection_updates_latest_fields():
     bus = FakeBus()
     alloc = Allocator(bus=bus)
 
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=1.0, y=2.0, ts_ms=10, battery=0.9))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=1.0, y=2.0, ts_ms=10, battery=0.9),
+    )
     drain_once(alloc)
 
     # update
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=3.0, y=4.0, ts_ms=20, battery=0.5))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=3.0, y=4.0, ts_ms=20, battery=0.5),
+    )
     drain_once(alloc)
 
     robots = alloc._Allocator__robots
@@ -100,14 +111,13 @@ def test_robot_state_projection_updates_latest_fields():
 
 
 def test_duplicate_task_created_is_ignored():
-
     bus = FakeBus()
     alloc = Allocator(bus=bus)
 
     payload = make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000)
-    bus.push("TASK:CREATED", payload)
+    bus.push('TASK:CREATED', payload)
     drain_once(alloc)
-    bus.push("TASK:CREATED", payload)  # duplicate
+    bus.push('TASK:CREATED', payload)  # duplicate
     drain_once(alloc)
 
     tasks = alloc._Allocator__tasks
@@ -116,36 +126,47 @@ def test_duplicate_task_created_is_ignored():
 
 
 def test_allocator_publishes_assign_task_to_lowest_bid_robot():
-
     bus = FakeBus()
     alloc = Allocator(bus=bus)
 
     # Two robots: r1 near pickup, r2 far
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0))
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R2_ID), x=10.0, y=10.0, ts_ms=1, battery=1.0))
-    bus.push("TASK:CREATED", make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0),
+    )
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R2_ID), x=10.0, y=10.0, ts_ms=1, battery=1.0),
+    )
+    bus.push(
+        'TASK:CREATED', make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000)
+    )
 
     drain_once(alloc)
     drain_once(alloc)
     drain_once(alloc)
 
-    assert bus.published, "Expected a COMMAND publish"
+    assert bus.published, 'Expected a COMMAND publish'
     topic, payload = bus.published[-1]
-    assert topic == "COMMAND"
+    assert topic == 'COMMAND'
 
     cmd = ActionCommand.FromString(payload)
     assert cmd.type == CommandType.COMMAND_TYPE_ASSIGN_TASK
     assert cmd.assign_task.task_id == str(T1_ID)
-    assert cmd.robot_id == str(R1_ID), "Nearest robot should win in this setup"
+    assert cmd.robot_id == str(R1_ID), 'Nearest robot should win in this setup'
 
 
 def test_inflight_task_not_assigned_twice():
-
     bus = FakeBus()
     alloc = Allocator(bus=bus)
 
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0))
-    bus.push("TASK:CREATED", make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0),
+    )
+    bus.push(
+        'TASK:CREATED', make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000)
+    )
 
     drain_once(alloc)
     drain_once(alloc)
@@ -153,33 +174,108 @@ def test_inflight_task_not_assigned_twice():
     first_count = len(bus.published)
 
     # Trigger another allocate attempt (e.g., robot_state updates again)
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=2, battery=1.0))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=2, battery=1.0),
+    )
     drain_once(alloc)
 
-    assert len(bus.published) == first_count, "Inflight task must not be assigned again"
+    assert len(bus.published) == first_count, 'Inflight task must not be assigned again'
 
 
 def test_task_completed_frees_robot_and_allows_next_assignment():
-
     bus = FakeBus()
     alloc = Allocator(bus=bus)
 
     # r1 idle, t1 arrives -> assigned to r1
-    bus.push("ROBOT_STATE", make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0))
-    bus.push("TASK:CREATED", make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000))
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0),
+    )
+    bus.push(
+        'TASK:CREATED', make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000)
+    )
     drain_once(alloc)
     drain_once(alloc)
 
     # Simulate completion event -> frees r1
-    completed = TaskCompletedEvent(task_id=str(T1_ID), robot_id=str(R1_ID)).SerializeToString()
-    bus.push("TASK:COMPLETED", completed)
+    completed = TaskCompletedEvent(
+        task_id=str(T1_ID), robot_id=str(R1_ID)
+    ).SerializeToString()
+    bus.push('TASK:COMPLETED', completed)
     drain_once(alloc)
 
     # New task should be assigned again
-    bus.push("TASK:CREATED", make_task_created(tid=str(T2_ID), px=1, py=1, deadline_ms=1000))
+    bus.push(
+        'TASK:CREATED', make_task_created(tid=str(T2_ID), px=1, py=1, deadline_ms=1000)
+    )
     drain_once(alloc)
 
     # Expect another publish
-    cmds = [ActionCommand.FromString(p) for (t, p) in bus.published if t == "COMMAND"]
-    assigned_tasks = [c.assign_task.task_id for c in cmds if c.type == CommandType.COMMAND_TYPE_ASSIGN_TASK]
+    cmds = [ActionCommand.FromString(p) for (t, p) in bus.published if t == 'COMMAND']
+    assigned_tasks = [
+        c.assign_task.task_id
+        for c in cmds
+        if c.type == CommandType.COMMAND_TYPE_ASSIGN_TASK
+    ]
     assert str(T2_ID) in assigned_tasks
+
+
+def test_robot_state_stale_update_is_dropped():
+    bus = FakeBus()
+    alloc = Allocator(bus=bus)
+
+    # Newer update first
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=10.0, y=10.0, ts_ms=20, battery=0.9),
+    )
+    drain_once(alloc)
+
+    # Older update arrives late -> must be ignored
+    bus.push(
+        'ROBOT_STATE',
+        make_robot_state(rid=str(R1_ID), x=1.0, y=2.0, ts_ms=10, battery=0.1),
+    )
+    drain_once(alloc)
+
+    rv = alloc._Allocator__robots[R1_ID]
+    assert rv.ts_ms == 20
+    assert rv.pos == (10.0, 10.0)
+    assert math.isclose(rv.battery, 0.9, rel_tol=1e-6)
+
+
+def test_deterministic_winner_on_tie_bid_is_stable_across_runs():
+    def run_once() -> str:
+        bus = FakeBus()
+        alloc = Allocator(bus=bus)
+
+        # Same position + same battery => identical bids for both robots
+        bus.push(
+            'ROBOT_STATE',
+            make_robot_state(rid=str(R1_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0),
+        )
+        bus.push(
+            'ROBOT_STATE',
+            make_robot_state(rid=str(R2_ID), x=0.0, y=0.0, ts_ms=1, battery=1.0),
+        )
+        bus.push(
+            'TASK:CREATED',
+            make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000),
+        )
+
+        drain_once(alloc)
+        drain_once(alloc)
+        drain_once(alloc)
+
+        assert bus.published, 'Expected a COMMAND publish'
+        _, payload = bus.published[-1]
+        cmd = ActionCommand.FromString(payload)
+        assert cmd.type == CommandType.COMMAND_TYPE_ASSIGN_TASK
+        return cmd.robot_id
+
+    winner1 = run_once()
+    winner2 = run_once()
+
+    assert winner1 == winner2
+    assert winner1 == str(R1_ID)

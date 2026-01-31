@@ -1,3 +1,4 @@
+import heapq
 import threading
 from uuid import uuid4
 
@@ -29,10 +30,14 @@ class Allocator:
     def __init__(self, bus: EventBus) -> None:
         self.__stop = threading.Event()
         self.__bus = bus
+
         self.__robots: dict[IDType, RobotView] = {}
         self.__busy_robots: set[IDType] = set()
+        self.__idle_robots: set[IDType] = set()
+
         self.__tasks: dict[IDType, TaskView] = {}
         self.__inflight_tasks: set[IDType] = set()
+        self.__next_avail_task: list[tuple[int, IDType]] = []
 
     def start(self) -> None:
         _logger.info('Allocator starting...')
@@ -76,19 +81,31 @@ class Allocator:
     def __handle_robot_state(self, payload: bytes) -> None:
         proto_msg = RobotState.FromString(payload)
         rid = IDType(proto_msg.id)
-        print(proto_msg)
-        if rid not in self.__robots:
+        incoming_ts_ms = proto_msg.ts_ms
+
+        existing = self.__robots.get(rid)
+        if existing is None:
             self.__robots[rid] = RobotView(
                 id=rid,
                 pos=(proto_msg.position.x, proto_msg.position.y),
-                ts_ms=proto_msg.ts_ms,
+                ts_ms=incoming_ts_ms,
                 battery=proto_msg.battery,
+            )
+            self.__idle_robots.add(rid)
+            return
+
+        if proto_msg.ts_ms <= existing.ts_ms:
+            _logger.debug(
+                "Dropping stale ROBOT_STATE robot_id=%s incoming_ts=%d stored_ts=%d",
+                str(rid),
+                incoming_ts_ms,
+                existing.ts_ms,
             )
             return
 
         robot = self.__robots[rid]
         robot.pos = (proto_msg.position.x, proto_msg.position.y)
-        robot.ts_ms = proto_msg.ts_ms
+        robot.ts_ms = incoming_ts_ms
         robot.battery = proto_msg.battery
 
     def __handle_task_created(self, payload: bytes) -> None:
@@ -97,6 +114,7 @@ class Allocator:
         if tid in self.__tasks:
             _logger.debug(f'Seen duplicated TaskCreatedEvent for task id: {str(tid)}')
             return
+        heapq.heappush(self.__next_avail_task, (proto_msg.ts_ms, tid))
         self.__tasks[tid] = TaskView(
             id=tid,
             pickup=(int(proto_msg.pickup.x), int(proto_msg.pickup.y)),
@@ -108,10 +126,13 @@ class Allocator:
         match topic:
             case 'TASK:COMPLETED':
                 task = TaskCompletedEvent.FromString(payload)
+                _logger.info(f'Task {task.task_id} completed.')
             case 'TASK:CANCELLED':
                 task = TaskCancelledEvent.FromString(payload)
+                _logger.info(f'Task {task.task_id} cancelled.')
             case 'TASK:FAILED':
                 task = TaskFailedEvent.FromString(payload)
+                _logger.info(f'Task {task.task_id} failed.')
             case _:
                 _logger.debug('Ignoreing task teminate request for topic: %s', topic)
                 return
@@ -119,28 +140,28 @@ class Allocator:
         tid = IDType(task.task_id)
         rid = IDType(task.robot_id)
         self.__tasks.pop(tid, None)
-        self.__inflight_tasks.discard(tid)
-        self.__busy_robots.discard(rid)
+        self.__inflight_tasks.remove(tid)
+        self.__busy_robots.remove(rid)
+        self.__idle_robots.add(rid)
 
     def __try_allocate(self) -> None:
-        idle_robots = set(self.__robots.keys()) - self.__busy_robots
-        if not idle_robots:
+        if len(self.__idle_robots) == 0:
             return
 
-        awaiting_tasks = list(set(self.__tasks.keys()) - self.__inflight_tasks)
-        if not awaiting_tasks:
+        if len(self.__next_avail_task) == 0:
             return
 
-        task_id = awaiting_tasks[0]
+        created_time, task_id = heapq.heappop(self.__next_avail_task)
 
         bids = [
             (_compute_bid(self.__robots[rid], self.__tasks[task_id]), rid)
-            for rid in idle_robots
+            for rid in self.__idle_robots
         ]
         bids.sort()
 
         _, winner_id = bids[0]
         self.__inflight_tasks.add(task_id)
+        self.__idle_robots.remove(winner_id)
         self.__busy_robots.add(winner_id)
 
         self._log_bid_table(task_id, bids, winner_id)
@@ -158,7 +179,10 @@ class Allocator:
         self.__bus.publish('COMMAND', cmd)
 
     def _log_bid_table(
-        self, task_id: IDType, bids: list[tuple[float, IDType]], winner: IDType
+        self,
+        task_id: IDType,
+        bids: list[tuple[float, IDType]],
+        winner: IDType,
     ) -> None:
         # Keep this in the demo: it sells "multi-agent bidding" instantly.
         lines = [f'Auction for task={str(task_id)}']
