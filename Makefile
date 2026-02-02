@@ -13,10 +13,10 @@ help:
 
 
 gen-contracts:
-	cd shared/contracts && buf generate --include-imports
+	cd shared/contracts && npx buf generate --include-imports
 	# protoc --protopath=./contracts --python-out=./generated
 	find shared/library/awrfo-python/src/ -type d -exec touch {}/__init__.py \;
 	
 lint-contracts:
-	cd shared/contracts && buf lint
-	cd shared/contracts && buf breaking --against '../../.git#branch=main'
+	cd shared/contracts && npx buf lint
+	cd shared/contracts && npx buf breaking --against '../../.git#branch=main'
