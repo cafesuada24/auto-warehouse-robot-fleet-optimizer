@@ -1,5 +1,7 @@
-import pytest
 import math
+
+from awrfo.contracts.events.task.v1.task_assignment_accepted_pb2 import TaskAssignmentAccepted
+import pytest
 from app.application.allocator import Allocator
 from app.application.ports.event_bus import EventMessage
 from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand
@@ -196,6 +198,13 @@ def test_task_completed_frees_robot_and_allows_next_assignment():
         'TASK:CREATED', make_task_created(tid=str(T1_ID), px=1, py=1, deadline_ms=1000)
     )
     drain_once(alloc)
+    drain_once(alloc)
+
+    accepted = TaskAssignmentAccepted(
+        task_id=str(T1_ID), robot_id=str(R1_ID),
+    ).SerializeToString()
+
+    bus.push('TASK:ASSIGNMENT:ACCEPTED', accepted)
     drain_once(alloc)
 
     # Simulate completion event -> frees r1

@@ -3,10 +3,16 @@ import threading
 from uuid import uuid4
 
 from app.domain.models.robot_view import RobotView
-from app.domain.models.task_view import TaskStatus, TaskView
+from app.domain.models.task_view import TaskView
 from awrfo.contracts.commands.v1.action_command_pb2 import ActionCommand, AssignTask
 from awrfo.contracts.commands.v1.command_policy_pb2 import COMMAND_POLICY_MUST
 from awrfo.contracts.commands.v1.command_type_pb2 import CommandType
+from awrfo.contracts.events.task.v1.task_assignment_accepted_pb2 import (
+    TaskAssignmentAccepted,
+)
+from awrfo.contracts.events.task.v1.task_assignment_rejected_pb2 import (
+    TaskAssignmentRejected,
+)
 from awrfo.contracts.events.task.v1.task_cancelled_pb2 import TaskCancelledEvent
 from awrfo.contracts.events.task.v1.task_completed_pb2 import TaskCompletedEvent
 from awrfo.contracts.events.task.v1.task_created_pb2 import TaskCreatedEvent
@@ -69,6 +75,12 @@ class Allocator:
             case 'TASK:CREATED':
                 self.__handle_task_created(payload)
 
+            case 'TASK:ASSIGNMENT:REJECTED':
+                self.__handle_task_assignment_rejected(payload)
+
+            case 'TASK:ASSIGNMENT:ACCEPTED':
+                self.__handle_task_assignment_accepted(payload)
+
             case 'TASK:COMPLETED' | 'TASK:CANCELLED' | 'TASK:FAILED':
                 self.__handle_task_terminate(payload, topic=topic)
 
@@ -108,6 +120,20 @@ class Allocator:
         robot.ts_ms = incoming_ts_ms
         robot.battery = proto_msg.battery
 
+    def __handle_task_assignment_rejected(self, payload: bytes) -> None:
+        proto_msg = TaskAssignmentRejected.FromString(payload)
+        tid = IDType(proto_msg.task_id)
+        robot_id = IDType(proto_msg.robot_id)
+        heapq.heappush(self.__next_avail_task, (self.__tasks[tid].ts_ms, tid))
+        self.__idle_robots.add(robot_id)
+
+    def __handle_task_assignment_accepted(self, payload: bytes) -> None:
+        proto_msg = TaskAssignmentAccepted.FromString(payload)
+        tid = IDType(proto_msg.task_id)
+        robot_id = IDType(proto_msg.robot_id)
+        self.__inflight_tasks.add(tid)
+        self.__busy_robots.add(robot_id)
+
     def __handle_task_created(self, payload: bytes) -> None:
         proto_msg = TaskCreatedEvent.FromString(payload)
         tid = IDType(proto_msg.task_id)
@@ -118,20 +144,25 @@ class Allocator:
         self.__tasks[tid] = TaskView(
             id=tid,
             pickup=(int(proto_msg.pickup.x), int(proto_msg.pickup.y)),
+            ts_ms=proto_msg.ts_ms,
             deadline_ms=proto_msg.deadline_ms,
-            status=TaskStatus.CREATED,
+            # status=TaskStatus.CREATED,
         )
 
     def __handle_task_terminate(self, payload: bytes, topic: str) -> None:
+
         match topic:
             case 'TASK:COMPLETED':
                 task = TaskCompletedEvent.FromString(payload)
+                # status = TaskStatus.COMPLETED
                 _logger.info(f'Task {task.task_id} completed.')
             case 'TASK:CANCELLED':
                 task = TaskCancelledEvent.FromString(payload)
+                # status = TaskStatus.CANCELLED
                 _logger.info(f'Task {task.task_id} cancelled.')
             case 'TASK:FAILED':
                 task = TaskFailedEvent.FromString(payload)
+                # status = TaskStatus.FAILED
                 _logger.info(f'Task {task.task_id} failed.')
             case _:
                 _logger.debug('Ignoreing task teminate request for topic: %s', topic)
@@ -139,6 +170,7 @@ class Allocator:
 
         tid = IDType(task.task_id)
         rid = IDType(task.robot_id)
+        # self.__tasks[tid].status = status
         self.__tasks.pop(tid, None)
         self.__inflight_tasks.remove(tid)
         self.__busy_robots.remove(rid)
@@ -151,18 +183,19 @@ class Allocator:
         if len(self.__next_avail_task) == 0:
             return
 
-        created_time, task_id = heapq.heappop(self.__next_avail_task)
+        _, task_id = heapq.heappop(self.__next_avail_task)
 
         bids = [
             (_compute_bid(self.__robots[rid], self.__tasks[task_id]), rid)
             for rid in self.__idle_robots
         ]
-        bids.sort()
+        # bids.sort()
 
-        _, winner_id = bids[0]
-        self.__inflight_tasks.add(task_id)
+        _, winner_id = min(bids)
         self.__idle_robots.remove(winner_id)
-        self.__busy_robots.add(winner_id)
+
+        # self.__inflight_tasks.add(task_id)
+        # self.__busy_robots.add(winner_id)
 
         self._log_bid_table(task_id, bids, winner_id)
 
