@@ -1,5 +1,4 @@
 from buf.validate import validate_pb2 as _validate_pb2
-from google.protobuf import duration_pb2 as _duration_pb2
 from awrfo.contracts.schemas.common.v1 import coordinate_pb2 as _coordinate_pb2
 from awrfo.contracts.commands.v1 import command_type_pb2 as _command_type_pb2
 from awrfo.contracts.commands.v1 import command_policy_pb2 as _command_policy_pb2

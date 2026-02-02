@@ -5,7 +5,7 @@ package awrfo.contracts.events.task.v1;
 import "buf/validate/validate.proto";
 import "awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto";
 
-message TaskAssignedEvent {
+message TaskAssignmentRejectedEvent {
   awrfo.contracts.envelopes.event_envelope.v1.EventEnvelope envelope = 1;
 
   optional string assignment_id = 2 [
@@ -24,6 +24,10 @@ message TaskAssignedEvent {
   ];
 
   optional uint64 ts_ms = 5 [
+    (buf.validate.field).required = true
+  ];
+
+  optional string reason = 6 [
     (buf.validate.field).required = true
   ];
 }

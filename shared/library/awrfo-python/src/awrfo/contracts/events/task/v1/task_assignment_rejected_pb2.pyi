@@ -7,16 +7,18 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class TaskAssignedEvent(_message.Message):
+class TaskAssignmentRejectedEvent(_message.Message):
     __slots__ = ()
     ENVELOPE_FIELD_NUMBER: _ClassVar[int]
     ASSIGNMENT_ID_FIELD_NUMBER: _ClassVar[int]
     TASK_ID_FIELD_NUMBER: _ClassVar[int]
     ROBOT_ID_FIELD_NUMBER: _ClassVar[int]
     TS_MS_FIELD_NUMBER: _ClassVar[int]
+    REASON_FIELD_NUMBER: _ClassVar[int]
     envelope: _event_envelope_pb2.EventEnvelope
     assignment_id: str
     task_id: str
     robot_id: str
     ts_ms: int
-    def __init__(self, envelope: _Optional[_Union[_event_envelope_pb2.EventEnvelope, _Mapping]] = ..., assignment_id: _Optional[str] = ..., task_id: _Optional[str] = ..., robot_id: _Optional[str] = ..., ts_ms: _Optional[int] = ...) -> None: ...
+    reason: str
+    def __init__(self, envelope: _Optional[_Union[_event_envelope_pb2.EventEnvelope, _Mapping]] = ..., assignment_id: _Optional[str] = ..., task_id: _Optional[str] = ..., robot_id: _Optional[str] = ..., ts_ms: _Optional[int] = ..., reason: _Optional[str] = ...) -> None: ...

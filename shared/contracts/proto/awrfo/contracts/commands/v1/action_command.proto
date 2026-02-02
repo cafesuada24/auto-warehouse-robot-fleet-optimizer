@@ -3,7 +3,6 @@ syntax = "proto3";
 package awrfo.contracts.commands.v1;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/duration.proto";
 import "awrfo/contracts/schemas/common/v1/coordinate.proto";
 import "awrfo/contracts/commands/v1/command_type.proto";
 import "awrfo/contracts/commands/v1/command_policy.proto";
