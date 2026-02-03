@@ -5,6 +5,14 @@ package awrfo.contracts.events.task.v1;
 import "buf/validate/validate.proto";
 import "awrfo/contracts/envelopes/event_envelope/v1/event_envelope.proto";
 
+enum RejectionReason {
+  REJECTION_REASON_TEMPORARY_BUSY = 0;
+  REJECTION_REASON_INSUFFICIENT_CAPABILITY = 1;
+  REJECTION_REASON_LOCATION_SO_FAR = 2;
+  REJECTION_REASON_INVALID_TASK = 3;
+  REJECTION_REASON_SYSTEM_ERROR = 4;
+}
+
 message TaskAssignmentRejectedEvent {
   awrfo.contracts.envelopes.event_envelope.v1.EventEnvelope envelope = 1;
 
@@ -27,7 +35,7 @@ message TaskAssignmentRejectedEvent {
     (buf.validate.field).required = true
   ];
 
-  optional string reason = 6 [
+  optional RejectionReason reason = 6 [
     (buf.validate.field).required = true
   ];
 }
