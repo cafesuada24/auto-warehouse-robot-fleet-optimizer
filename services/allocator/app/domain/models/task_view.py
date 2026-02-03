@@ -1,14 +1,10 @@
+from dataclasses import field
+
 from awrfo.types import IDType
+from pydantic import NonNegativeFloat
 from pydantic.dataclasses import dataclass
 from pydantic.types import NonNegativeInt
 
-# class TaskStatus(Enum):
-#     CREATED = 1
-#     ASSIGNED = 2
-#     EXECUTING = 3
-#     COMPLETED = 4
-#     FAILED = 5
-#     CANCELLED = 6
 
 @dataclass
 class TaskView:
@@ -16,4 +12,6 @@ class TaskView:
     ts_ms: NonNegativeInt
     pickup: tuple[NonNegativeInt, NonNegativeInt]
     deadline_ms: NonNegativeInt
-    # status: TaskStatus
+    blacklist_robot_ids: set[IDType] = field(default_factory=set)
+    last_rejected_ts_s: NonNegativeFloat | None = None
+    retry_count: NonNegativeInt = 0
