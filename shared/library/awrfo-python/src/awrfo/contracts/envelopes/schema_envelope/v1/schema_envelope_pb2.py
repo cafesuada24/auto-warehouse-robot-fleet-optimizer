@@ -26,7 +26,7 @@ from buf.validate import validate_pb2 as buf_dot_validate_dot_validate__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nBawrfo/contracts/envelopes/schema_envelope/v1/schema_envelope.proto\x12,awrfo.contracts.envelopes.schema_envelope.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb8\x01\n\x0eSchemaEnvelope\x12\"\n\x05ts_ms\x18\x01 \x01(\x04\x42\r\xbaH\n\n\x05-\x00\x00\x00\x00\xc8\x01\x01R\x04tsMs\x12;\n\x0boccurred_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\noccurredAt\x12\x1a\n\x08producer\x18\x04 \x01(\tR\x08producer\x12)\n\x10\x65nvelope_version\x18\x05 \x01(\rR\x0f\x65nvelopeVersionB\x98\x02\n0com.awrfo.contracts.envelopes.schema_envelope.v1B\x13SchemaEnvelopeProtoP\x01\xa2\x02\x04\x41\x43\x45S\xaa\x02+Awrfo.Contracts.Envelopes.SchemaEnvelope.V1\xca\x02+Awrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\xe2\x02\x37\x41wrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\\GPBMetadata\xea\x02/Awrfo::Contracts::Envelopes::SchemaEnvelope::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\nBawrfo/contracts/envelopes/schema_envelope/v1/schema_envelope.proto\x12,awrfo.contracts.envelopes.schema_envelope.v1\x1a\x1b\x62uf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x01\n\x0eSchemaEnvelope\x12\x1f\n\x05ts_ms\x18\x01 \x01(\x04\x42\n\xbaH\x07\x32\x02(\x00\xc8\x01\x01R\x04tsMs\x12;\n\x0boccurred_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampR\noccurredAt\x12\x1a\n\x08producer\x18\x04 \x01(\tR\x08producer\x12)\n\x10\x65nvelope_version\x18\x05 \x01(\rR\x0f\x65nvelopeVersionB\x98\x02\n0com.awrfo.contracts.envelopes.schema_envelope.v1B\x13SchemaEnvelopeProtoP\x01\xa2\x02\x04\x41\x43\x45S\xaa\x02+Awrfo.Contracts.Envelopes.SchemaEnvelope.V1\xca\x02+Awrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\xe2\x02\x37\x41wrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\\GPBMetadata\xea\x02/Awrfo::Contracts::Envelopes::SchemaEnvelope::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,7 +35,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n0com.awrfo.contracts.envelopes.schema_envelope.v1B\023SchemaEnvelopeProtoP\001\242\002\004ACES\252\002+Awrfo.Contracts.Envelopes.SchemaEnvelope.V1\312\002+Awrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\342\0027Awrfo\\Contracts\\Envelopes\\SchemaEnvelope\\V1\\GPBMetadata\352\002/Awrfo::Contracts::Envelopes::SchemaEnvelope::V1'
   _globals['_SCHEMAENVELOPE'].fields_by_name['ts_ms']._loaded_options = None
-  _globals['_SCHEMAENVELOPE'].fields_by_name['ts_ms']._serialized_options = b'\272H\n\n\005-\000\000\000\000\310\001\001'
+  _globals['_SCHEMAENVELOPE'].fields_by_name['ts_ms']._serialized_options = b'\272H\0072\002(\000\310\001\001'
   _globals['_SCHEMAENVELOPE']._serialized_start=179
-  _globals['_SCHEMAENVELOPE']._serialized_end=363
+  _globals['_SCHEMAENVELOPE']._serialized_end=360
 # @@protoc_insertion_point(module_scope)
